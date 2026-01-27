@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { Beaker, LogIn, Loader2, AlertCircle } from 'lucide-react';
 import { mockLogin } from '../api/apiClient';
 
-interface LoginProps {
-  onLogin: (username: string) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const onLogin = (username: string) => {
+    localStorage.setItem('username', username);
+    localStorage.setItem('isAuthenticated', 'true');
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +40,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-slate-100 px-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-transparent to-teal-100" />
+      <div className="absolute inset-0 bg-linear-to-br from-blue-100 via-transparent to-teal-100" />
 
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">

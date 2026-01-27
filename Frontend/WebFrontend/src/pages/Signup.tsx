@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import { User, Mail, Lock, Loader2, CheckCircle2 } from "lucide-react";
 import { mockSignup } from "../api/apiClient";
+import { NavLink } from "react-router-dom";
 
-interface SignupProps {
-  onSignupSuccess: (username: string) => void;
-}
-
-const Signup: React.FC<SignupProps> = ({ onSignupSuccess }) => {
+const Signup: React.FC = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +32,7 @@ const Signup: React.FC<SignupProps> = ({ onSignupSuccess }) => {
       const result = await mockSignup(username, email, password);
       if (result) {
         setSuccess(true);
-        onSignupSuccess(username);
+        localStorage.setItem("username", username);
       } else {
         setError("Signup failed. Try again.");
       }
@@ -158,9 +155,9 @@ const Signup: React.FC<SignupProps> = ({ onSignupSuccess }) => {
 
         <p className="mt-6 text-center text-sm text-gray-500">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:text-blue-700 underline">
+          <NavLink to="/" className="text-blue-600 hover:text-blue-700 underline">
             Log In
-          </a>
+          </NavLink>
         </p>
       </div>
     </div>

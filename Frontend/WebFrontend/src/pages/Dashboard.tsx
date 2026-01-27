@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import FileUpload from "../components/FileUpload";
 import SummaryCards from "../components/SummaryCards";
@@ -8,12 +8,8 @@ import HistoryList from "../components/HistoryList";
 import type { DatasetSummary, UploadHistory } from "../types/dataset";
 import { mockUploadCSV } from "../api/apiClient";
 
-interface DashboardProps {
-  username: string;
-  onLogout: () => void;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
+const Dashboard = () => {
+  const username = localStorage.getItem('username') || 'Guest';
   const [currentDataset, setCurrentDataset] =
     useState<DatasetSummary | null>(null);
   const [datasets, setDatasets] = useState<Map<number, DatasetSummary>>(
@@ -21,6 +17,12 @@ const Dashboard: React.FC<DashboardProps> = ({ username, onLogout }) => {
   );
   const [uploadHistory, setUploadHistory] = useState<UploadHistory[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  const onLogout = () => {
+    localStorage.removeItem('username');
+    localStorage.removeItem('isAuthenticated');
+    window.location.reload();
+  }
 
   const handleUpload = useCallback(async (filename: string) => {
     setIsUploading(true);
