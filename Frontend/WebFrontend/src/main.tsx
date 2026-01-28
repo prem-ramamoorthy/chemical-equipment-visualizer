@@ -6,10 +6,16 @@ import NotFound from './pages/NotFound';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
+import Auth from './pages/Auth';
 
 const router = createBrowserRouter([
   { path: '/', element: <Login />, errorElement: <NotFound /> },
-  { path: '/dashboard', element: <Dashboard /> },
+  {
+    element: <Auth />,
+    children: [
+      { path: '/dashboard', element: <Dashboard /> }
+    ]
+  },
   { path: '/signup', element: <Signup /> },
 ]);
 

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { User, Mail, Lock, Loader2, CheckCircle2 } from "lucide-react";
-import { mockSignup } from "../api/apiClient";
-import { NavLink } from "react-router-dom";
+import { User, Mail, Lock, Loader2 } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const Signup: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -10,12 +9,11 @@ const Signup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess(false);
 
     if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("All fields are required");
@@ -29,12 +27,31 @@ const Signup: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const result = await mockSignup(username, email, password);
-      if (result) {
-        setSuccess(true);
-        localStorage.setItem("username", username);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/register/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          password2: confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate("/");
       } else {
-        setError("Signup failed. Try again.");
+        if (data.error) {
+          setError(data.error);
+        } else if (data.errors) {
+          setError("Validation errors: " + JSON.stringify(data.errors));
+        } else {
+          setError("Signup failed. Try again.");
+        }
       }
     } catch {
       setError("An unexpected error occurred. Try again.");
@@ -54,13 +71,6 @@ const Signup: React.FC = () => {
           <div className="flex items-start gap-2 mb-4 rounded-lg border border-red-300 bg-red-100 px-3 py-2 text-sm text-red-700">
             <Lock className="w-4 h-4 mt-0.5" />
             <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="flex items-start gap-2 mb-4 rounded-lg border border-green-300 bg-green-100 px-3 py-2 text-sm text-green-700">
-            <CheckCircle2 className="w-4 h-4 mt-0.5" />
-            <span>Signup successful!</span>
           </div>
         )}
 

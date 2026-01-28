@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Beaker, LogIn, Loader2, AlertCircle } from 'lucide-react';
-import { mockLogin } from '../api/apiClient';
+import { NavLink } from 'react-router-dom';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -12,6 +14,8 @@ const Login = () => {
     localStorage.setItem('username', username);
     localStorage.setItem('isAuthenticated', 'true');
   }
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +29,42 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const success = await mockLogin(username, password);
-      if (success) {
-        onLogin(username);
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/login/`,
+        { username, password },
+        { headers: { 'Content-Type': 'application/json' }, withCredentials: false }
+      );
+      if (response.status === 200 && response.data.username) {
+        onLogin(response.data.username);
+        navigate('/dashboard');
       } else {
         setError('Invalid credentials. Please try again.');
       }
-    } catch {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: unknown) {
+      console.error('Login error:', err);
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as any).response === 'object' &&
+        (err as any).response !== null &&
+        'data' in (err as any).response &&
+        typeof (err as any).response.data === 'object' &&
+        (err as any).response.data !== null &&
+        'error' in (err as any).response.data
+      ) {
+        const errorData = (err as any).response.data.error;
+        if (typeof errorData === 'string') {
+          setError(errorData);
+        } else if (typeof errorData === 'object') {
+          const firstError = Object.values(errorData)[0];
+          setError(Array.isArray(firstError) ? firstError[0] : String(firstError));
+        } else {
+          setError('Invalid credentials. Please try again.');
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +150,7 @@ const Login = () => {
           </form>
 
           <p className="mt-6 text-center text-xs text-slate-500">
-            Demo mode enabled — any credentials are accepted
+            Dont have an account ? <NavLink to="/signup" className="text-blue-700 font-bold text-md">Sign up</NavLink>
           </p>
         </div>
       </div>

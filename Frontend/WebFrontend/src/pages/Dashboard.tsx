@@ -18,11 +18,20 @@ const Dashboard = () => {
   const [uploadHistory, setUploadHistory] = useState<UploadHistory[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const onLogout = () => {
-    localStorage.removeItem('username');
-    localStorage.removeItem('isAuthenticated');
-    window.location.reload();
-  }
+  const onLogout = async () => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/logout/`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem('username');
+      localStorage.removeItem('isAuthenticated');
+      window.location.reload();
+    }
+  };
 
   const handleUpload = useCallback(async (filename: string) => {
     setIsUploading(true);
