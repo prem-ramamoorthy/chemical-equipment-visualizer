@@ -30,5 +30,7 @@ class App(QWidget):
     def show_signup(self):
         self.stack.setCurrentWidget(self.signup)
 
-    def show_dashboard(self):
+    def show_dashboard(self , username=None):
+        self.dashboard = DashboardPage(self, username=username)
+        self.stack.addWidget(self.dashboard)
         self.stack.setCurrentWidget(self.dashboard)

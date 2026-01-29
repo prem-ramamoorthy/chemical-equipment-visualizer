@@ -59,7 +59,6 @@ class Navbar(QWidget):
         left.addWidget(icon)
         left.addLayout(title_box)
 
-        # ---- Right Section (User + Logout) ----
         right = QHBoxLayout()
         right.setSpacing(12)
 

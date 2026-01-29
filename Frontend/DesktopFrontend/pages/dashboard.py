@@ -9,13 +9,15 @@ from components.summary_cards import SummaryCards
 from components.charts import Charts
 from components.data_table import DataTable
 from components.history_list import HistoryList
+from api.client import logout_user
 
 
 class DashboardPage(QWidget):
-    def __init__(self, app):
+    def __init__(self, app , username="Guest"):
         super().__init__()
         self.app = app
         self.setObjectName("Dashboard")
+        self.username = username
         self.init_ui()
 
     def init_ui(self):
@@ -39,7 +41,7 @@ class DashboardPage(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        self.navbar = Navbar("Guest", self.logout)
+        self.navbar = Navbar(self.username, self.logout)
         root.addWidget(self.navbar)
 
         container = QFrame()
@@ -103,4 +105,5 @@ class DashboardPage(QWidget):
         self.table.update(dataset)
 
     def logout(self):
+        logout_user()
         self.app.show_login()

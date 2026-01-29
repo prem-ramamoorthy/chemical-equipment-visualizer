@@ -17,7 +17,6 @@ class SignupPage(QWidget):
     def init_ui(self):
         self.setStyleSheet("""
             QWidget {
-                background-color: #f9fafb;
                 font-family: Arial;
             }
             QFrame#Card {
@@ -70,6 +69,9 @@ class SignupPage(QWidget):
                 padding: 8px;
                 border-radius: 8px;
                 font-size: 13px;
+            }
+            QPushButton:focus {
+                outline: none;
             }
         """)
 
@@ -149,6 +151,10 @@ class SignupPage(QWidget):
         self.alert.show()
 
     def handle_signup(self):
+        
+        self.signup_btn.setText("Signing up...")
+        self.signup_btn.setEnabled(False)
+        
         u = self.username["input"].text().strip()
         e = self.email["input"].text().strip()
         p = self.password["input"].text()
@@ -158,21 +164,24 @@ class SignupPage(QWidget):
 
         if not all([u, e, p, c]):
             self.show_error("All fields are required")
+            self.signup_btn.setText("Sign Up")
+            self.signup_btn.setEnabled(True)
             return
 
         if p != c:
             self.show_error("Passwords do not match")
+            self.signup_btn.setText("Sign Up")
+            self.signup_btn.setEnabled(True)
             return
 
-        self.signup_btn.setText("Signing up...")
-        self.signup_btn.setEnabled(False)
-
         try:
-            res = signup_user(u, e, p)
-            if res.status_code == 201:
+            res = signup_user(u, e, p , c)
+            if res["success"]:
                 self.show_success("Signup successful!")
+                if self.app and hasattr(self.app, "show_login"):
+                    self.app.show_login()
             else:
-                self.show_error("Signup failed. Try again.")
+                self.show_error(res.get("error", "Signup failed. Try again."))
         except Exception:
             self.show_error("Server not reachable")
         finally:
