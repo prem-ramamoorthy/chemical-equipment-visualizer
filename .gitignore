@@ -240,3 +240,14 @@ Desktop.ini
 # *.ui~ (Qt Designer backups, but usually not ignored)
 
 # React TSX specific (covered above in Node.js/TypeScript sections)
+./Frontend/DesktopFrontend/pages/__pycache__
+./Frontend/DesktopFrontend/components/__pycache__
+./Frontend/DesktopFrontend/utils/__pycache__
+./Frontend/DesktopFrontend/hooks/__pycache__
+./Frontend/DesktopFrontend/context/__pycache__
+./Frontend/DesktopFrontend/services/__pycache__
+./Frontend/DesktopFrontend/styles/__pycache__
+./Frontend/DesktopFrontend/__pycache__
+./Frontend/DesktopFrontend/.next/__pycache__
+./Frontend/DesktopFrontend/.next/static/__pycache__
+./Frontend/DesktopFrontend/.next/server/__pycache__

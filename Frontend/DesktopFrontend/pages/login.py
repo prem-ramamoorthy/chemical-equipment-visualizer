@@ -150,13 +150,18 @@ class LoginPage(QWidget):
 
         layout.addWidget(self.login_btn)
 
-        demo = QLabel("Demo mode enabled — any credentials are accepted")
-        demo.setAlignment(Qt.AlignCenter)
-        demo.setStyleSheet("font-size: 11px; color: #64748b;")
-
-        layout.addWidget(demo)
+        self.signup_btn = QPushButton("Dont have an account? Sign Up")
+        self.signup_btn.setStyleSheet("font-size: 14px; color: #2563eb; background: transparent; border: none;")
+        self.signup_btn.setFlat(True)
+        self.signup_btn.clicked.connect(self.signup)
+        layout.addWidget(self.signup_btn)
 
         root.addWidget(card)
+        
+    def signup(self):
+        print("Signup clicked")
+        self.app.show_signup()
+        pass
 
     def create_input(self, label_text, placeholder, password=False):
         container = QWidget()

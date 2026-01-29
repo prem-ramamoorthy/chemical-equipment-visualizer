@@ -1,18 +1,17 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit,
-    QPushButton, QVBoxLayout, QHBoxLayout, QFrame
+    QPushButton, QVBoxLayout, QFrame
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
 from api.client import signup_user
 
-
 class SignupPage(QWidget):
-    def __init__(self , parent = 0):
+    def __init__(self, app=None):
         super().__init__()
+        self.app = app
         self.setWindowTitle("Create Account")
-        self.setFixedSize(420, 520)
+        self.resize(420, 520)
         self.init_ui()
 
     def init_ui(self):
@@ -75,14 +74,17 @@ class SignupPage(QWidget):
         """)
 
         root = QVBoxLayout(self)
-        root.setAlignment(Qt.AlignCenter)
+        root.setContentsMargins(0, 0, 0, 0)
+
+        root.addStretch()
 
         card = QFrame()
         card.setObjectName("Card")
         card.setFixedWidth(360)
 
-        layout = QVBoxLayout(card)
-        layout.setSpacing(14)
+        card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(14)
+        card_layout.setContentsMargins(24, 24, 24, 24)
 
         title = QLabel("Create an Account")
         title.setObjectName("Title")
@@ -91,44 +93,34 @@ class SignupPage(QWidget):
         self.alert = QLabel("")
         self.alert.hide()
 
-        layout.addWidget(title)
-        layout.addWidget(self.alert)
+        card_layout.addWidget(title)
+        card_layout.addWidget(self.alert)
 
-        self.username = self.create_input("Username")
-        self.email = self.create_input("Email")
-        self.password = self.create_input("Password", password=True)
-        self.confirm = self.create_input("Confirm Password", password=True)
+        self.username = self.create_input("Username", "Enter your username")
+        self.email = self.create_input("Email", "Enter your email")
+        self.password = self.create_input("Password", "Enter your password", password=True)
+        self.confirm = self.create_input("Confirm Password", "Re-enter your password", password=True)
 
-        layout.addWidget(self.username["container"])
-        layout.addWidget(self.email["container"])
-        layout.addWidget(self.password["container"])
-        layout.addWidget(self.confirm["container"])
+        card_layout.addWidget(self.username["container"])
+        card_layout.addWidget(self.email["container"])
+        card_layout.addWidget(self.password["container"])
+        card_layout.addWidget(self.confirm["container"])
 
         self.signup_btn = QPushButton("Sign Up")
         self.signup_btn.clicked.connect(self.handle_signup)
 
-        layout.addWidget(self.signup_btn)
+        card_layout.addWidget(self.signup_btn)
 
-        footer = QLabel(
-            'Already have an account? <a href="#">Log In</a>'
-        )
-        footer.setAlignment(Qt.AlignCenter)
-        footer.setStyleSheet("""
-            QLabel {
-                font-size: 12px;
-                color: #6b7280;
-            }
-            a {
-                color: #2563eb;
-                text-decoration: none;
-                font-weight: 600;
-            }
-        """)
+        self.login_btn = QPushButton("Already have an account? Log In")
+        self.login_btn.setStyleSheet("font-size: 14px; color: #2563eb; background: transparent; border: none;")
+        self.login_btn.setFlat(True)
+        self.login_btn.clicked.connect(self.app.show_login)
+        card_layout.addWidget(self.login_btn)
+        root.addWidget(card, alignment=Qt.AlignHCenter)
 
-        layout.addWidget(footer)
-        root.addWidget(card)
+        root.addStretch()
 
-    def create_input(self, label_text, password=False):
+    def create_input(self, label_text, placeholder, password=False):
         container = QWidget()
         v = QVBoxLayout(container)
         v.setSpacing(4)
@@ -137,6 +129,7 @@ class SignupPage(QWidget):
         label.setProperty("class", "label")
 
         inp = QLineEdit()
+        inp.setPlaceholderText(placeholder)
         if password:
             inp.setEchoMode(QLineEdit.Password)
 
@@ -185,7 +178,6 @@ class SignupPage(QWidget):
         finally:
             self.signup_btn.setText("Sign Up")
             self.signup_btn.setEnabled(True)
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
