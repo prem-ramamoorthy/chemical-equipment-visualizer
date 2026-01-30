@@ -14,10 +14,6 @@ interface HistogramChartProps {
 const HistogramChart: React.FC<HistogramChartProps> = ({ summary }) => {
   if (!summary) return null;
 
-  // Assume summary.histogram contains: { flowrate: number[], temperature: number[] }
-  // We'll combine both datasets into a single histogram using "stacked" bars with transparency.
-
-  // Calculate bins (assuming both arrays are same length and bins)
   const bins = summary.histogram.labels;
   const flowrateData = summary.histogram.flowrate;
   const temperatureData = summary.histogram.temperature;
@@ -28,7 +24,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({ summary }) => {
       {
         label: 'Flowrate',
         data: flowrateData,
-        backgroundColor: 'rgba(37, 99, 235, 0.6)', // blue, alpha=0.6
+        backgroundColor: 'rgba(37, 99, 235, 0.6)',
         borderWidth: 1,
         barPercentage: 1.0,
         categoryPercentage: 1.0,
@@ -36,7 +32,7 @@ const HistogramChart: React.FC<HistogramChartProps> = ({ summary }) => {
       {
         label: 'Temperature',
         data: temperatureData,
-        backgroundColor: 'rgba(220, 38, 38, 0.6)', // red, alpha=0.6
+        backgroundColor: 'rgba(220, 38, 38, 0.6)',
         borderWidth: 1,
         barPercentage: 1.0,
         categoryPercentage: 1.0,

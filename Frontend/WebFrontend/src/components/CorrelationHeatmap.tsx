@@ -1,94 +1,100 @@
 import React from 'react';
-import { Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
-import { Chart as ChartJS } from 'chart.js';
-import { Grid } from 'lucide-react';
 import SafeChart from './SafeChart';
-import type { ChartsGridSummary } from '../types/dataset';
 
-ChartJS.register(MatrixController, MatrixElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  MatrixController,
+  MatrixElement,
+  Tooltip,
+  Legend
+);
 
 interface CorrelationHeatmapProps {
-  summary: ChartsGridSummary | null;
+  labels: string[];
+  matrix: number[][];
 }
 
-const CorrelationHeatmap: React.FC<CorrelationHeatmapProps> = ({ summary }) => {
-  if (!summary) return null;
-
-  // Generate labels and data from summary if available, else fallback to defaults
-  const variables = summary?.variables ?? ["Flowrate", "Pressure", "Temperature"];
-  const matrix = summary?.correlationMatrix ?? [
-    [1.0, 0.62, 0.48],
-    [0.62, 1.0, 0.71],
-    [0.48, 0.71, 1.0],
-  ];
-
+const HeatmapChart: React.FC<CorrelationHeatmapProps> = ({ labels, matrix }) => {
   const data = {
     datasets: [
       {
         label: 'Correlation',
-        data: variables.flatMap((rowVar, i) =>
-          variables.map((colVar, j) => ({
-            x: colVar,
-            y: rowVar,
-            v: matrix[i][j],
+        data: matrix.flatMap((row, i) =>
+          row.map((value, j) => ({
+            x: labels[j],
+            y: labels[i],
+            v: value,
           }))
         ),
-        backgroundColor: (ctx: import('chart.js').ScriptableContext<'matrix'>) => {
-          const v = Math.abs((ctx.raw as { v: number }).v);
-          return `rgba(59,130,246,${v})`;
+        backgroundColor: (ctx: any) => {
+          const value = ctx.raw.v;
+          const alpha = Math.abs(value);
+          return value > 0
+            ? `rgba(33, 150, 243, ${alpha})`
+            : `rgba(244, 67, 54, ${alpha})`;
         },
-        width: () => 40,
-        height: () => 40,
-        xAxisID: 'x',
-        yAxisID: 'y',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.8)',
+        width: ({ chart }: any) =>
+          (chart.chartArea || {}).width / labels.length - 2,
+        height: ({ chart }: any) =>
+          (chart.chartArea || {}).height / labels.length - 2,
       },
     ],
   };
 
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'hsl(215, 25%, 15%)',
+        callbacks: {
+          label: (ctx: any) => `Correlation: ${ctx.raw.v.toFixed(2)}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: 'category' as const,
+        labels,
+        grid: { display: false },
+        ticks: { font: { size: 11 } },
+      },
+      y: {
+        type: 'category' as const,
+        labels,
+        grid: { display: false },
+        ticks: { font: { size: 11 } },
+      },
+    },
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-      <div className="mb-4 flex items-center gap-2">
-        <Grid className="h-5 w-5 text-blue-600" />
-        <h3 className="text-lg font-semibold text-slate-900">Correlation Matrix</h3>
-      </div>
-      <div className="h-64">
+      <h3 className="mb-4 text-lg font-semibold text-slate-900">
+        Correlation Heatmap
+      </h3>
+      <div className="h-80">
         <SafeChart
           type="matrix"
           data={data}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  title: (items) => `${items[0].raw.x} vs ${items[0].raw.y}`,
-                  label: (item) => `Correlation: ${(item.raw as any).v.toFixed(2)}`,
-                },
-              },
-            },
-            scales: {
-              x: {
-                type: 'category',
-                labels: variables,
-                offset: true,
-                grid: { display: false },
-                position: 'top',
-              },
-              y: {
-                type: 'category',
-                labels: variables,
-                offset: true,
-                grid: { display: false },
-                reverse: true,
-              },
-            },
-          }}
-          chartKey="correlation-chart"
+          options={options}
+          chartKey="correlation-heatmap"
         />
       </div>
     </div>
   );
 };
 
-export default CorrelationHeatmap;
+export default HeatmapChart;

@@ -7,6 +7,12 @@ import DataTable from "../components/DataTable";
 import HistoryList from "../components/HistoryList";
 import type { DatasetSummary, UploadHistory, ChartsGridSummary } from "../types/dataset";
 import { mockUploadCSV } from "../api/apiClient";
+import DistributionAnalysis from "../components/DistributionAnalysis";
+import StatisticalSummary from "../components/StatisticalSummary";
+import GroupedEquipmentAnalytics from "../components/GroupedEquipmentAnalytics";
+import CorrelationInsights from "../components/CorrelationInsights";
+import ConditionalAnalysis from "../components/ConditionalAnalysis";
+import EquipmentPerformanceRanking from "../components/EquipmentPerformanceRanking";
 
 const mockDatasetSummary: ChartsGridSummary = {
   id: 1,
@@ -25,7 +31,7 @@ const mockDatasetSummary: ChartsGridSummary = {
 
   scatter_points: Array.from({ length: 200 }, () => ({
     x: +(30 + Math.random() * 50).toFixed(2),
-    y: +(4 + Math.random() * 5).toFixed(2), 
+    y: +(4 + Math.random() * 5).toFixed(2),
     t: +(60 + Math.random() * 30).toFixed(2)
   })),
 
@@ -36,12 +42,12 @@ const mockDatasetSummary: ChartsGridSummary = {
   },
 
   boxplot: {
-    labels: ["Pump", "Valve", "Compressor", "Heat Exchanger"],
+    labels: ['A', 'B', 'C', 'D'],
     values: [
-      [5.1, 5.6, 6.2, 6.5, 6.9, 5.8], 
-      [4.4, 4.9, 5.2, 5.6, 5.8],
-      [6.8, 7.1, 7.4, 7.7, 8.0],
-      [5.9, 6.2, 6.5, 6.8, 7.0],
+      [10, 25, 40, 55, 80],
+      [15, 30, 45, 60, 85],
+      [20, 35, 50, 65, 90],
+      [25, 45, 60, 75, 100],
     ],
   },
 
@@ -66,6 +72,152 @@ const mockDatasetSummary: ChartsGridSummary = {
     pressure: +(4 + Math.random() * 5).toFixed(2),
     temperature: +(60 + Math.random() * 30).toFixed(2),
   })),
+
+  StatisticalSummary: {
+    data: {
+      flowrate: {
+        count: 500,
+        mean: 126.0074,
+        std: 37.472654,
+        min: 51.3,
+        q1: 99.4,
+        median: 137.25,
+        q3: 157.5,
+        max: 174.8,
+      },
+      pressure: {
+        count: 500,
+        mean: 6.4444,
+        std: 1.431519,
+        min: 3.5,
+        q1: 5.5,
+        median: 6.8,
+        q3: 7.4,
+        max: 8.8,
+      },
+      temperature: {
+        count: 500,
+        mean: 120.9308,
+        std: 16.418311,
+        min: 90.2,
+        q1: 106.75,
+        median: 122.35,
+        q3: 134.175,
+        max: 150.0,
+      },
+    }
+  },
+
+  GroupedEquipmentAnalytics: {
+    Compressor: {
+      flowrate: { mean: 97.61, std: 6.71, min: 85.2, max: 109.7 },
+      pressure: { mean: 8.33, std: 0.29, min: 7.8, max: 8.8 },
+      temperature: { mean: 96.8, std: 4.67, min: 90.2, max: 104.8 },
+    },
+    Condenser: {
+      flowrate: { mean: 164.72, std: 5.53, min: 155.5, max: 174.8 },
+      pressure: { mean: 7.0, std: 0.29, min: 6.5, max: 7.5 },
+      temperature: { mean: 128.08, std: 4.37, min: 120.0, max: 134.8 },
+    },
+    HeatExchanger: {
+      flowrate: { mean: 154.42, std: 8.07, min: 140.2, max: 169.8 },
+      pressure: { mean: 6.4, std: 0.36, min: 5.8, max: 7.0 },
+      temperature: { mean: 132.96, std: 7.57, min: 120.1, max: 144.4 },
+    },
+    Pump: {
+      flowrate: { mean: 126.26, std: 8.36, min: 110.1, max: 139.9 },
+      pressure: { mean: 5.46, std: 0.4, min: 4.8, max: 6.2 },
+      temperature: { mean: 113.9, std: 5.68, min: 105.1, max: 124.8 },
+    },
+    Reactor: {
+      flowrate: { mean: 143.12, std: 7.1, min: 130.0, max: 154.8 },
+      pressure: { mean: 7.38, std: 0.34, min: 6.8, max: 8.0 },
+      temperature: { mean: 143.03, std: 4.39, min: 135.2, max: 150.0 },
+    },
+    Valve: {
+      flowrate: { mean: 59.77, std: 5.54, min: 51.3, max: 69.9 },
+      pressure: { mean: 3.96, std: 0.27, min: 3.5, max: 4.5 },
+      temperature: { mean: 107.33, std: 4.35, min: 100.3, max: 115.0 },
+    },
+  },
+
+  DistributionAnalysis: {
+    title: "Flowrate",
+    unit: " m³/h",
+    stats: {
+      min: 12,
+      q1: 20,
+      median: 28,
+      q3: 35,
+      max: 42,
+      outliers: [45],
+    }
+  },
+
+  CorrelationInsights: {
+    matrix: {
+      Flowrate: {
+        Flowrate: 1.0,
+        Pressure: 0.4957,
+        Temperature: 0.6998,
+      },
+      Pressure: {
+        Flowrate: 0.4957,
+        Pressure: 1.0,
+        Temperature: 0.1627,
+      },
+      Temperature: {
+        Flowrate: 0.6998,
+        Pressure: 0.1627,
+        Temperature: 1.0,
+      },
+    }
+  },
+
+  ConditionalAnalysis: {
+    conditionLabel: "Records with ABOVE average pressure",
+    totalRecords: 301,
+    stats: {
+      flowrate: 140.330233,
+      pressure: 7.42093,
+      temperature: 124.555482,
+    }
+  },
+
+  EquipmentPerformanceRanking:
+  {
+    Compressor: {
+      flowrate: 97.61,
+      pressure: 8.33,
+      temperature: 96.8,
+    },
+    Reactor: {
+      flowrate: 143.12,
+      pressure: 7.38,
+      temperature: 143.03,
+    },
+    Condenser: {
+      flowrate: 164.72,
+      pressure: 7.0,
+      temperature: 128.08,
+    },
+    HeatExchanger: {
+      flowrate: 154.42,
+      pressure: 6.4,
+      temperature: 132.96,
+    },
+    Pump: {
+      flowrate: 126.26,
+      pressure: 5.46,
+      temperature: 113.9,
+    },
+    Valve: {
+      flowrate: 59.77,
+      pressure: 3.96,
+      temperature: 107.33,
+    },
+  }
+
 };
 
 const Dashboard = () => {
@@ -150,7 +302,36 @@ const Dashboard = () => {
           </aside>
 
           <section className="space-y-6 lg:col-span-3">
+
+            <StatisticalSummary
+              data={mockDatasetSummary.StatisticalSummary.data}
+            />
+
+            <GroupedEquipmentAnalytics
+              data={mockDatasetSummary.GroupedEquipmentAnalytics}
+            />
+
             <SummaryCards summary={currentDataset} />
+
+            <DistributionAnalysis
+              title={mockDatasetSummary.DistributionAnalysis.title}
+              unit={mockDatasetSummary.DistributionAnalysis.unit}
+              stats={mockDatasetSummary.DistributionAnalysis.stats}
+            />
+
+            <CorrelationInsights
+              matrix={mockDatasetSummary.CorrelationInsights.matrix}
+            />
+
+            <ConditionalAnalysis
+              conditionLabel={mockDatasetSummary.ConditionalAnalysis.conditionLabel}
+              totalRecords={mockDatasetSummary.ConditionalAnalysis.totalRecords}
+              stats={mockDatasetSummary.ConditionalAnalysis.stats}
+            />
+
+            <EquipmentPerformanceRanking
+              data={mockDatasetSummary.EquipmentPerformanceRanking}
+            />
 
             <AdvancedChartsGrid summary={mockDatasetSummary} />
 
