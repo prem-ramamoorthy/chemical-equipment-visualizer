@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import FileUpload from "../components/FileUpload";
-import SummaryCards from "../components/SummaryCards";
 import AdvancedChartsGrid from "../components/AdvancedChartsGrid";
 import DataTable from "../components/DataTable";
 import HistoryList from "../components/HistoryList";
@@ -248,11 +247,11 @@ const Dashboard = () => {
     }
   };
 
-  const handleUpload = useCallback(async (filename: string) => {
+  const handleUpload = useCallback(async (file: File, filename: string) => {
     setIsUploading(true);
 
     try {
-      const dataset = await mockUploadCSV(filename);
+      const dataset = await mockUploadCSV(file, `${import.meta.env.VITE_API_BASE_URL}/datasets/upload/`);
 
       setDatasets((prev) => {
         const next = new Map(prev);
@@ -307,17 +306,7 @@ const Dashboard = () => {
               data={mockDatasetSummary.StatisticalSummary.data}
             />
 
-            <GroupedEquipmentAnalytics
-              data={mockDatasetSummary.GroupedEquipmentAnalytics}
-            />
-
-            <SummaryCards summary={currentDataset} />
-
-            <DistributionAnalysis
-              title={mockDatasetSummary.DistributionAnalysis.title}
-              unit={mockDatasetSummary.DistributionAnalysis.unit}
-              stats={mockDatasetSummary.DistributionAnalysis.stats}
-            />
+            <AdvancedChartsGrid summary={mockDatasetSummary} />
 
             <CorrelationInsights
               matrix={mockDatasetSummary.CorrelationInsights.matrix}
@@ -329,11 +318,19 @@ const Dashboard = () => {
               stats={mockDatasetSummary.ConditionalAnalysis.stats}
             />
 
+            <DistributionAnalysis
+              title={mockDatasetSummary.DistributionAnalysis.title}
+              unit={mockDatasetSummary.DistributionAnalysis.unit}
+              stats={mockDatasetSummary.DistributionAnalysis.stats}
+            />
+
             <EquipmentPerformanceRanking
               data={mockDatasetSummary.EquipmentPerformanceRanking}
             />
 
-            <AdvancedChartsGrid summary={mockDatasetSummary} />
+            <GroupedEquipmentAnalytics
+              data={mockDatasetSummary.GroupedEquipmentAnalytics}
+            />
 
             <DataTable data={currentDataset?.data ?? []} />
           </section>

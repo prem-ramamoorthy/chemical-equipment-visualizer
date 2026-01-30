@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
 
 interface FileUploadProps {
-  onUpload: (filename: string) => Promise<void>;
+  onUpload: (file: File, filename: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -39,13 +39,18 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, isLoading }) => {
 
   const handleFile = async (file: File) => {
     setUploadSuccess(false);
-    await onUpload(file.name);
+    await onUpload(file, file.name);
     setUploadSuccess(true);
     setTimeout(() => setUploadSuccess(false), 3000);
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div
+      className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+      onDragEnter={e => e.preventDefault()}
+      onDragOver={e => e.preventDefault()}
+      onDrop={e => e.preventDefault()}
+    >
       <div className="mb-4 flex items-center gap-2">
         <FileSpreadsheet className="h-5 w-5 text-blue-600" />
         <h2 className="text-lg font-semibold text-slate-900">
@@ -66,6 +71,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUpload, isLoading }) => {
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
+        tabIndex={0}
       >
         <input
           ref={inputRef}

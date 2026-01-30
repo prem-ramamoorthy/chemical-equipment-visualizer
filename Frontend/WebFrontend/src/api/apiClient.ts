@@ -1,6 +1,5 @@
 import type { Equipment, DatasetSummary } from '../types/dataset';
 
-// Mock equipment data for Dataset 1
 const mockEquipment1: Equipment[] = [
   { name: 'P-101', type: 'Pump', flowrate: 125.5, pressure: 3.2, temperature: 45.0 },
   { name: 'R-201', type: 'Reactor', flowrate: 450.0, pressure: 8.5, temperature: 180.0 },
@@ -12,7 +11,6 @@ const mockEquipment1: Equipment[] = [
   { name: 'E-303', type: 'Heat Exchanger', flowrate: 190.0, pressure: 2.2, temperature: 75.0 },
 ];
 
-// Mock equipment data for Dataset 2
 const mockEquipment2: Equipment[] = [
   { name: 'P-401', type: 'Pump', flowrate: 88.0, pressure: 5.0, temperature: 52.0 },
   { name: 'R-501', type: 'Reactor', flowrate: 520.0, pressure: 15.0, temperature: 250.0 },
@@ -44,37 +42,70 @@ const calculateSummary = (id: number, data: Equipment[]): DatasetSummary => {
   };
 };
 
-// Pre-calculated mock datasets
 export const mockDatasets: DatasetSummary[] = [
   calculateSummary(1, mockEquipment1),
   calculateSummary(2, mockEquipment2),
 ];
 
-// Simulated API functions
 export const mockLogin = async (username: string, password: string): Promise<boolean> => {
-  // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 800));
 
-  // Accept any non-empty credentials for demo
   if (username.length > 0 && password.length > 0) {
     return true;
   }
   return false;
 };
 
-export const mockUploadCSV = async (filename : string): Promise<DatasetSummary> => {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+export const mockUploadCSV = async (file: File, url: string): Promise<DatasetSummary> => {
+  const serverData = await uploadCSVToServer(file, url);
 
-  // Randomly return one of the mock datasets
+  if (Array.isArray(serverData) && serverData.length > 0 && serverData[0].name && serverData[0].type) {
+    const equipmentData: Equipment[] = serverData.map((item: any) => ({
+      name: item.name,
+      type: item.type,
+      flowrate: parseFloat(item.flowrate),
+      pressure: parseFloat(item.pressure),
+      temperature: parseFloat(item.temperature),
+    }));
+    return {
+      ...calculateSummary(Date.now(), equipmentData),
+      id: Date.now(),
+    };
+  }
+
   const randomIndex = Math.floor(Math.random() * mockDatasets.length);
   const dataset = mockDatasets[randomIndex];
-
-  // Return a copy with a new ID based on timestamp
   return {
     ...dataset,
     id: Date.now(),
   };
+};
+
+export const uploadCSVToServer = async (file: File, url: string): Promise<any> => {
+  const text = await file.text();
+  const rows = text.trim().split('\n');
+  const headers = rows[0].split(',');
+  const data = rows.slice(1).map(row => {
+    const values = row.split(',');
+    return headers.reduce((obj, header, idx) => {
+      obj[header.trim()] = values[idx]?.trim();
+      return obj;
+    }, {} as Record<string, string>);
+  });
+
+  console.log("Uploading CSV data:", data);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload CSV');
+  }
+
+  return response.json();
 };
 
 export const getDatasetById = (id: number): DatasetSummary | undefined => {

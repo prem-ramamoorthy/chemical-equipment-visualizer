@@ -1,33 +1,110 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser
-from .models import Dataset
-from .utils import analyze_csv
+from rest_framework import status
+from rest_framework.parsers import JSONParser
+from rest_framework.permissions import AllowAny
 
+from .models import Dataset
+from .analytics import analyze_equipment_json
+import logging
 
 class UploadCSVView(APIView):
-    parser_classes = [MultiPartParser]
+    parser_classes = [JSONParser]
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        file = request.FILES["file"]
+        try:
+            data = request.data
 
-        dataset = Dataset.objects.create(
-            name=file.name,
-            file=file,
-            summary={}
-        )
+            if not isinstance(data, list):
+                return Response(
+                    {"error": "Expected a JSON array of equipment records"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-        summary, preview = analyze_csv(dataset.file.path)
-        dataset.summary = summary
-        dataset.save()
+            if len(data) == 0:
+                return Response(
+                    {"error": "Dataset cannot be empty"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-        # Keep only last 5
-        Dataset.objects.order_by('-uploaded_at')[5:].delete()
+            required_keys = {
+                "Equipment Name",
+                "Type",
+                "Flowrate",
+                "Pressure",
+                "Temperature",
+            }
 
-        return Response({
-            "summary": summary,
-            "preview": preview
-        })
+            for idx, row in enumerate(data):
+                if not isinstance(row, dict):
+                    return Response(
+                        {"error": f"Row {idx} is not a valid object"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                missing = required_keys - row.keys()
+                if missing:
+                    return Response(
+                        {
+                            "error": f"Row {idx} missing fields",
+                            "missing": list(missing),
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            try:
+                summary = analyze_equipment_json(data)
+            except Exception as e:
+                logging.exception("Error analyzing equipment JSON")
+                return Response(
+                    {
+                        "error": "Failed to analyze dataset",
+                        "details": str(e),
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            try:
+                dataset = Dataset.objects.create(
+                    name=f"dataset_{Dataset.objects.count() + 1}",
+                    raw_data=data,
+                    summary=summary,
+                )
+            except Exception as e:
+                logging.exception("Error saving dataset to database")
+                return Response(
+                    {
+                        "error": "Failed to save dataset",
+                        "details": str(e),
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            try:
+                old_datasets = Dataset.objects.order_by("-uploaded_at")[5:]
+                if old_datasets.exists():
+                    Dataset.objects.filter(pk__in=[d.pk for d in old_datasets]).delete()
+            except Exception as e:
+                logging.exception("Error deleting old datasets")
+                # Do not fail the request, just log the error
+
+            return Response(
+                {
+                    "id": dataset.id,
+                    **summary,
+                },
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            logging.exception("Unexpected error in UploadCSVView")
+            return Response(
+                {
+                    "error": "An unexpected error occurred",
+                    "details": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class DatasetHistoryView(APIView):
     def get(self, request):
