@@ -93,8 +93,6 @@ export const uploadCSVToServer = async (file: File, url: string): Promise<any> =
     }, {} as Record<string, string>);
   });
 
-  console.log("Uploading CSV data:", data);
-
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

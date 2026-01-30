@@ -21,11 +21,28 @@ interface DistributionAnalysisProps {
   stats: DistributionStats;
 }
 
-const DistributionAnalysis: React.FC<DistributionAnalysisProps> = ({
+const DistributionAnalysis: React.FC<Partial<DistributionAnalysisProps>> = ({
   title,
   unit,
   stats,
 }) => {
+
+  if (!title || !stats) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm animate-pulse">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-blue-100 p-2">
+            <div className="h-5 w-5 bg-blue-200 rounded" />
+          </div>
+          <div>
+            <div className="h-4 w-48 bg-slate-200 rounded mb-2" />
+            <div className="h-3 w-32 bg-slate-200 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const iqr = stats.q3 - stats.q1;
   const range = stats.max - stats.min;
   const skew =

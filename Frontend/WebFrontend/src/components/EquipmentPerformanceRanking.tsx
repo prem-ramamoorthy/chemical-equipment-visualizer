@@ -87,7 +87,49 @@ const EquipmentCard = ({
     </div>
 );
 
-const EquipmentPerformanceRanking: React.FC<EquipmentRankingProps> = ({ data }) => {
+const EquipmentPerformanceRanking: React.FC<Partial<EquipmentRankingProps>> = ({ data }) => {
+
+    if (!data) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <div className="h-6 w-64 bg-slate-200 rounded mb-2 animate-pulse" />
+                    <div className="h-4 w-40 bg-slate-100 rounded animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm animate-pulse"
+                        >
+                            <div className="mb-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full border bg-slate-100" />
+                                    <div className="h-5 w-24 bg-slate-200 rounded" />
+                                </div>
+                                <div className="h-4 w-20 bg-yellow-100 rounded" />
+                            </div>
+                            <div className="space-y-2">
+                                {[1, 2, 3].map((j) => (
+                                    <div
+                                        key={j}
+                                        className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-4 w-4 bg-slate-200 rounded" />
+                                            <div className="h-3 w-16 bg-slate-200 rounded" />
+                                        </div>
+                                        <div className="h-4 w-10 bg-slate-200 rounded" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     const ranked = Object.entries(data).sort(
         (a, b) => b[1].flowrate - a[1].flowrate
     );

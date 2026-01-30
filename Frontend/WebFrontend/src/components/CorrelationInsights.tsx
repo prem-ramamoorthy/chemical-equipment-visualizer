@@ -18,7 +18,65 @@ const getStrength = (value: number) => {
   return { label: 'Weak', icon: TrendingDown, color: 'text-slate-500' };
 };
 
-const CorrelationInsights: React.FC<CorrelationInsightsProps> = ({ matrix }) => {
+const CorrelationInsights: React.FC<Partial<CorrelationInsightsProps>> = ({ matrix }) => {
+
+  if (!matrix) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm animate-pulse">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-indigo-100 p-2">
+            <div className="h-5 w-5 bg-indigo-200 rounded" />
+          </div>
+          <div>
+            <div className="h-4 w-32 bg-slate-200 rounded mb-2" />
+            <div className="h-3 w-48 bg-slate-100 rounded" />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="border-b border-slate-200 px-4 py-2" />
+                {[...Array(3)].map((_, i) => (
+                  <th key={i} className="border-b border-slate-200 px-4 py-2">
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[...Array(3)].map((_, rowIdx) => (
+                <tr key={rowIdx}>
+                  <td className="border-b border-slate-100 px-4 py-2">
+                    <div className="h-3 w-16 bg-slate-200 rounded" />
+                  </td>
+                  {[...Array(3)].map((_, colIdx) => (
+                    <td key={colIdx} className="border-b border-slate-100 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-8 bg-slate-200 rounded" />
+                        <div className="h-3 w-12 bg-slate-100 rounded" />
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 rounded-lg bg-slate-50 p-4">
+          <div className="h-3 w-32 bg-slate-200 rounded mb-3" />
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-3 w-full bg-slate-100 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const variables = Object.keys(matrix);
 
   return (

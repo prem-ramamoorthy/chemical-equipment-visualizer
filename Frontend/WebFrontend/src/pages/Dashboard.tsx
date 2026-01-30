@@ -302,9 +302,7 @@ const Dashboard = () => {
 
           <section className="space-y-6 lg:col-span-3">
 
-            <StatisticalSummary
-              data={mockDatasetSummary.StatisticalSummary.data}
-            />
+            <StatisticalSummary data={mockDatasetSummary.StatisticalSummary.data}/>
 
             <AdvancedChartsGrid summary={mockDatasetSummary} />
 

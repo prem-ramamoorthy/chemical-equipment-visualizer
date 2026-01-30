@@ -36,11 +36,28 @@ const MetricRow = ({
   </div>
 );
 
-const ConditionalAnalysis: React.FC<ConditionalAnalysisProps> = ({
+const ConditionalAnalysis: React.FC<Partial<ConditionalAnalysisProps>> = ({
   conditionLabel,
   totalRecords,
   stats,
 }) => {
+
+  if (!conditionLabel || !totalRecords || !stats) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm animate-pulse">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-emerald-100 p-2">
+            <div className="h-5 w-5 bg-emerald-200 rounded" />
+          </div>
+          <div>
+            <div className="h-4 w-48 bg-slate-200 rounded mb-2" />
+            <div className="h-3 w-32 bg-slate-200 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-6 flex items-center gap-3">

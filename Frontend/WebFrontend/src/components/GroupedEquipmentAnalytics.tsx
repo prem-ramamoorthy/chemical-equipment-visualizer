@@ -96,7 +96,52 @@ const EquipmentCard = ({
   </div>
 );
 
-const GroupedEquipmentAnalytics: React.FC<GroupedAnalyticsProps> = ({ data }) => {
+const GroupedEquipmentAnalytics: React.FC<Partial<GroupedAnalyticsProps>> = ({ data }) => {
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="h-6 w-64 bg-slate-200 rounded mb-2 animate-pulse" />
+          <div className="h-4 w-40 bg-slate-100 rounded animate-pulse" />
+        </div>
+
+        <div className="space-y-6">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm animate-pulse"
+            >
+              <div className="mb-5 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-slate-200 animate-pulse" />
+                <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {[1, 2, 3].map((j) => (
+                  <div
+
+                    key={j}
+                    className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="mb-3 flex items-center gap-2">
+                      <div className="h-4 w-4 bg-slate-200 rounded animate-pulse" />
+                      <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      {[1, 2, 3, 4].map((k) => (
+                        <div key={k} className="h-4 w-16 bg-slate-200 rounded animate-pulse" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>

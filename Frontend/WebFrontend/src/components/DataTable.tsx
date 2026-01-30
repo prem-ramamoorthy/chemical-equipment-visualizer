@@ -9,7 +9,10 @@ interface DataTableProps {
 type SortField = 'name' | 'type' | 'flowrate' | 'pressure' | 'temperature';
 type SortOrder = 'asc' | 'desc' | null;
 
-const DataTable: React.FC<DataTableProps> = ({ data }) => {
+const DataTable: React.FC<Partial<DataTableProps>> = ({ data }) => {
+
+  if (!data) data = [];
+
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 

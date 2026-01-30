@@ -61,7 +61,44 @@ const Stat = ({ label, value }: { label: string; value: number | string }) => (
   </div>
 );
 
-const StatisticalSummary: React.FC<StatisticalSummaryProps> = ({ data }) => {
+const StatisticalSummary: React.FC<Partial<StatisticalSummaryProps>> = ({ data }) => {
+
+  if (!data) {
+    return (
+      <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-slate-500 text-center py-8 animate-none">
+          Please upload data to view the statistical summary.
+        </p>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-slate-200 bg-slate-100 p-6 shadow-sm"
+            >
+              <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-lg bg-blue-100 p-2">
+                  <div className="h-5 w-5 bg-blue-200 rounded" />
+                </div>
+                <div className="h-5 w-24 bg-slate-200 rounded" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {[...Array(8)].map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-lg bg-slate-200 px-4 py-3 flex flex-col gap-2"
+                  >
+                    <div className="h-3 w-16 bg-slate-300 rounded" />
+                    <div className="h-4 w-12 bg-slate-300 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
