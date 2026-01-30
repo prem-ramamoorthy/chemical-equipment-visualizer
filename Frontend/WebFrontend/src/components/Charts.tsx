@@ -9,8 +9,8 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
-import { Bar, Pie } from 'react-chartjs-2';
 import { PieChart, BarChart3 } from 'lucide-react';
+import SafeChart from './SafeChart';
 import type { DatasetSummary } from '../types/dataset';
 
 ChartJS.register(
@@ -67,19 +67,9 @@ const Charts: React.FC<ChartsProps> = ({ summary }) => {
     plugins: {
       legend: {
         position: 'bottom' as const,
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: { size: 12 },
-        },
+        labels: { usePointStyle: true, padding: 20, font: { size: 12 } },
       },
-      tooltip: {
-        backgroundColor: 'hsl(215, 25%, 15%)',
-        titleFont: { size: 13 },
-        bodyFont: { size: 12 },
-        padding: 12,
-        cornerRadius: 8,
-      },
+      tooltip: { backgroundColor: 'hsl(215, 25%, 15%)', cornerRadius: 8 },
     },
   };
 
@@ -88,16 +78,8 @@ const Charts: React.FC<ChartsProps> = ({ summary }) => {
     datasets: [
       {
         label: 'Average Values',
-        data: [
-          summary.avg_flowrate,
-          summary.avg_pressure,
-          summary.avg_temperature,
-        ],
-        backgroundColor: [
-          'hsl(200, 80%, 50%)',
-          'hsl(35, 90%, 55%)',
-          'hsl(0, 72%, 51%)',
-        ],
+        data: [summary.avg_flowrate, summary.avg_pressure, summary.avg_temperature],
+        backgroundColor: ['hsl(200, 80%, 50%)', 'hsl(35, 90%, 55%)', 'hsl(0, 72%, 51%)'],
         borderRadius: 6,
         borderSkipped: false,
       },
@@ -109,23 +91,11 @@ const Charts: React.FC<ChartsProps> = ({ summary }) => {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: {
-        backgroundColor: 'hsl(215, 25%, 15%)',
-        titleFont: { size: 13 },
-        bodyFont: { size: 12 },
-        padding: 12,
-        cornerRadius: 8,
-      },
+      tooltip: { backgroundColor: 'hsl(215, 25%, 15%)', cornerRadius: 8 },
     },
     scales: {
-      x: {
-        grid: { display: false },
-        ticks: { font: { size: 11 } },
-      },
-      y: {
-        grid: { color: 'hsl(214, 20%, 88%)' },
-        ticks: { font: { size: 11 } },
-      },
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: { grid: { color: 'hsl(214, 20%, 88%)' }, ticks: { font: { size: 11 } } },
     },
   };
 
@@ -134,24 +104,20 @@ const Charts: React.FC<ChartsProps> = ({ summary }) => {
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
         <div className="mb-4 flex items-center gap-2">
           <PieChart className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-slate-900">
-            Equipment Type Distribution
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-900">Equipment Type Distribution</h3>
         </div>
         <div className="h-64">
-          <Pie data={pieData} options={pieOptions} />
+          <SafeChart type="pie" data={pieData} options={pieOptions} chartKey="pie-summary" />
         </div>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
         <div className="mb-4 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-slate-900">
-            Average Parameters
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-900">Average Parameters</h3>
         </div>
         <div className="h-64">
-          <Bar data={barData} options={barOptions} />
+          <SafeChart type="bar" data={barData} options={barOptions} chartKey="bar-summary" />
         </div>
       </div>
     </div>

@@ -32,7 +32,7 @@ const Login = () => {
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/auth/login/`,
         { username, password },
-        { headers: { 'Content-Type': 'application/json' }, withCredentials: false }
+        { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
       );
       if (response.status === 200 && response.data.username) {
         onLogin(response.data.username);
