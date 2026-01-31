@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import FileUpload from "../components/FileUpload";
 import AdvancedChartsGrid from "../components/AdvancedChartsGrid";
@@ -20,9 +20,53 @@ const Dashboard = () => {
   const [currentDataset, setCurrentDataset] =
     useState<ChartsGridSummary | null>(null);
 
-  const [datasets, setDatasets] = useState<Map<number, {dataset: ChartsGridSummary, data: EquipmentRecord[]}>>(
+  const [datasets, setDatasets] = useState<Map<number, { dataset: ChartsGridSummary, data: EquipmentRecord[] }>>(
     new Map()
   );
+
+  useEffect(() => {
+    const fetchInitialDatasets = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/datasets/history/`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const result = await response.json();
+
+        const datasetsMap = new Map<number, { dataset: ChartsGridSummary, data: EquipmentRecord[] }>();
+        const uploadHistoryArr: UploadHistory[] = [];
+
+        if (result && Array.isArray(result.order) && typeof result.datasets === "object") {
+          for (const id of result.order) {
+            const dsObj = result.datasets[id];
+            if (dsObj) {
+              datasetsMap.set(Number(id), { dataset: dsObj.dataset, data: dsObj.data });
+              uploadHistoryArr.push({
+                id: Number(id),
+                filename: dsObj.meta?.name ?? `dataset_${id}`,
+                uploadedAt: dsObj.meta?.uploaded_at ? new Date(dsObj.meta.uploaded_at) : new Date(),
+                datasetId: Number(id),
+              });
+            }
+          }
+        }
+
+        setDatasets(datasetsMap);
+        setUploadHistory(uploadHistoryArr.slice(0, 5));
+        if (result.order && result.order.length > 0) {
+          const firstId = result.order[0];
+          const first = result.datasets[firstId];
+          if (first) {
+            setCurrentDataset(first.dataset);
+            setData(first.data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch datasets:", error);
+      }
+    };
+    fetchInitialDatasets();
+  }, []);
 
   const [uploadHistory, setUploadHistory] = useState<UploadHistory[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -50,7 +94,7 @@ const Dashboard = () => {
       setData(data);
       setDatasets((prev) => {
         const next = new Map(prev);
-        next.set(dataset.id, {dataset : dataset, data : data});
+        next.set(dataset.id, { dataset: dataset, data: data });
         return next;
       });
 
