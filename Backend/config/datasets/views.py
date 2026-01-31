@@ -46,10 +46,7 @@ class UploadCSVView(APIView):
                 missing = required_keys - row.keys()
                 if missing:
                     return Response(
-                        {
-                            "error": f"Row {idx} missing fields",
-                            "missing": list(missing),
-                        },
+                        {"error": f"Row {idx} missing fields", "missing": list(missing)},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
@@ -58,10 +55,7 @@ class UploadCSVView(APIView):
             except Exception as e:
                 logging.exception("Error analyzing equipment JSON")
                 return Response(
-                    {
-                        "error": "Failed to analyze dataset",
-                        "details": str(e),
-                    },
+                    {"error": "Failed to analyze dataset", "details": str(e)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
@@ -74,10 +68,7 @@ class UploadCSVView(APIView):
             except Exception as e:
                 logging.exception("Error saving dataset to database")
                 return Response(
-                    {
-                        "error": "Failed to save dataset",
-                        "details": str(e),
-                    },
+                    {"error": "Failed to save dataset", "details": str(e)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
@@ -85,24 +76,17 @@ class UploadCSVView(APIView):
                 old_datasets = Dataset.objects.order_by("-uploaded_at")[5:]
                 if old_datasets.exists():
                     Dataset.objects.filter(pk__in=[d.pk for d in old_datasets]).delete()
-            except Exception as e:
+            except Exception:
                 logging.exception("Error deleting old datasets")
-                # Do not fail the request, just log the error
 
             return Response(
-                {
-                    "id": dataset.id,
-                    **summary,
-                },
+                {"id": dataset.id, **summary},
                 status=status.HTTP_201_CREATED
             )
         except Exception as e:
             logging.exception("Unexpected error in UploadCSVView")
             return Response(
-                {
-                    "error": "An unexpected error occurred",
-                    "details": str(e),
-                },
+                {"error": "An unexpected error occurred", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

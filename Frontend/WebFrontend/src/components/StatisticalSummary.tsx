@@ -20,6 +20,20 @@ export interface StatisticalSummaryProps {
   };
 }
 
+const formatValue = (value: number | string): string => {
+  if (typeof value === 'number') {
+    if (Number.isInteger(value)) return value.toString();
+    return value.toFixed(2);
+  }
+  const match = value.match(/^(-?\d+(\.\d+)?)(.*)$/);
+  if (match) {
+    const num = parseFloat(match[1]);
+    const rounded = Number.isInteger(num) ? num.toString() : num.toFixed(2);
+    return `${rounded}${match[3]}`;
+  }
+  return value;
+};
+
 const MetricCard = ({
   title,
   icon: Icon,
@@ -42,13 +56,13 @@ const MetricCard = ({
 
       <div className="grid grid-cols-2 gap-4">
         <Stat label="Count" value={stats.count} />
-        <Stat label="Mean" value={`${stats.mean}${unit}`} />
-        <Stat label="Std Dev" value={stats.std} />
-        <Stat label="Min" value={`${stats.min}${unit}`} />
-        <Stat label="Q1 (25%)" value={`${stats.q1}${unit}`} />
-        <Stat label="Median" value={`${stats.median}${unit}`} />
-        <Stat label="Q3 (75%)" value={`${stats.q3}${unit}`} />
-        <Stat label="Max" value={`${stats.max}${unit}`} />
+        <Stat label="Mean" value={formatValue(`${stats.mean}${unit}`)} />
+        <Stat label="Std Dev" value={formatValue(stats.std)} />
+        <Stat label="Min" value={formatValue(`${stats.min}${unit}`)} />
+        <Stat label="Q1 (25%)" value={formatValue(`${stats.q1}${unit}`)} />
+        <Stat label="Median" value={formatValue(`${stats.median}${unit}`)} />
+        <Stat label="Q3 (75%)" value={formatValue(`${stats.q3}${unit}`)} />
+        <Stat label="Max" value={formatValue(`${stats.max}${unit}`)} />
       </div>
     </div>
   );

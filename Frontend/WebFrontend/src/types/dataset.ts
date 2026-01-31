@@ -52,7 +52,7 @@ export interface ChartsGridSummary {
     v: number;
   }[];
 
-  data: Record<string, unknown>[];
+  data: Equipment[];
 
   DistributionAnalysis: {
     title: string;
@@ -114,7 +114,6 @@ export interface ChartsGridSummary {
 
 }
 
-
 export interface User {
   username: string;
   isAuthenticated: boolean;
@@ -125,4 +124,11 @@ export interface UploadHistory {
   filename: string;
   uploadedAt: Date;
   datasetId: number;
+}
+export interface EquipmentRecord {
+  "Equipment Name": string;
+  Type: string;
+  Flowrate: string;
+  Pressure: string;
+  Temperature: string;
 }

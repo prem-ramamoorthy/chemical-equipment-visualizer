@@ -21,6 +21,8 @@ interface DistributionAnalysisProps {
   stats: DistributionStats;
 }
 
+const round2 = (value: number) => Number(value.toFixed(2));
+
 const DistributionAnalysis: React.FC<Partial<DistributionAnalysisProps>> = ({
   title,
   unit,
@@ -43,8 +45,8 @@ const DistributionAnalysis: React.FC<Partial<DistributionAnalysisProps>> = ({
     );
   }
 
-  const iqr = stats.q3 - stats.q1;
-  const range = stats.max - stats.min;
+  const iqr = round2(stats.q3 - stats.q1);
+  const range = round2(stats.max - stats.min);
   const skew =
     stats.median - stats.q1 > stats.q3 - stats.median
       ? 'Right Skewed'
@@ -65,7 +67,7 @@ const DistributionAnalysis: React.FC<Partial<DistributionAnalysisProps>> = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Median" value={stats.median} unit={unit} />
+        <StatCard label="Median" value={round2(stats.median)} unit={unit} />
         <StatCard label="IQR" value={iqr} unit={unit} />
         <StatCard label="Range" value={range} unit={unit} />
         <SkewCard skew={skew} />
@@ -76,7 +78,7 @@ const DistributionAnalysis: React.FC<Partial<DistributionAnalysisProps>> = ({
           Interpretation
         </h4>
         <p className="text-sm text-slate-600 leading-relaxed">
-          The median value of <strong>{stats.median}{unit}</strong> indicates
+          The median value of <strong>{round2(stats.median)}{unit}</strong> indicates
           the central tendency of the dataset. The interquartile range (IQR)
           of <strong>{iqr}{unit}</strong> reflects moderate variability,
           while the total range suggests the overall spread.
@@ -110,7 +112,7 @@ const StatCard = ({
   <div className="rounded-lg border border-slate-200 bg-white p-4">
     <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
     <p className="mt-1 text-xl font-semibold text-slate-900">
-      {value}
+      {round2(value)}
       {unit}
     </p>
   </div>

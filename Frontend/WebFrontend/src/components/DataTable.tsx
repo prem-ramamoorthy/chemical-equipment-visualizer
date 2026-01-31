@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { Table2, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import type { Equipment } from '../types/dataset';
+import type { EquipmentRecord } from '../types/dataset';
 
-interface DataTableProps {
-  data: Equipment[];
+export interface DataTableProps {
+  data: EquipmentRecord[];
 }
 
-type SortField = 'name' | 'type' | 'flowrate' | 'pressure' | 'temperature';
+type SortField = 'Equipment Name' | 'Type' | 'Flowrate' | 'Pressure' | 'Temperature';
 type SortOrder = 'asc' | 'desc' | null;
 
 const DataTable: React.FC<Partial<DataTableProps>> = ({ data }) => {
-
   if (!data) data = [];
 
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -43,17 +42,21 @@ const DataTable: React.FC<Partial<DataTableProps>> = ({ data }) => {
     if (!sortField || !sortOrder) return data;
 
     return [...data].sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
+      const aVal: string | number | undefined = a[sortField];
+      const bVal: string | number | undefined = b[sortField];
+
+      if (['Flowrate', 'Pressure', 'Temperature'].includes(sortField)) {
+        const aNum = typeof aVal === 'number' ? aVal : parseFloat(aVal as string);
+        const bNum = typeof bVal === 'number' ? bVal : parseFloat(bVal as string);
+        const safeANum = isNaN(aNum) ? 0 : aNum;
+        const safeBNum = isNaN(bNum) ? 0 : bNum;
+        return sortOrder === 'asc' ? safeANum - safeBNum : safeBNum - safeANum;
+      }
 
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return sortOrder === 'asc'
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
-      }
-
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
       }
 
       return 0;
@@ -85,7 +88,7 @@ const DataTable: React.FC<Partial<DataTableProps>> = ({ data }) => {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md" style={{ height: 400, display: 'flex', flexDirection: 'column' }}>
       <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-4">
         <Table2 className="h-5 w-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-slate-900">Equipment Data</h3>
@@ -94,17 +97,17 @@ const DataTable: React.FC<Partial<DataTableProps>> = ({ data }) => {
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto flex-1" style={{ overflowY: 'auto' }}>
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {[
-                { field: 'name' as SortField, label: 'Equipment Name' },
-                { field: 'type' as SortField, label: 'Type' },
-                { field: 'flowrate' as SortField, label: 'Flowrate (m³/h)' },
-                { field: 'pressure' as SortField, label: 'Pressure (bar)' },
-                { field: 'temperature' as SortField, label: 'Temp (°C)' },
-              ].map((col) => (
+              {([
+                { field: 'Equipment Name' as SortField, label: 'Equipment Name' },
+                { field: 'Type' as SortField, label: 'Type' },
+                { field: 'Flowrate' as SortField, label: 'Flowrate (m³/h)' },
+                { field: 'Pressure' as SortField, label: 'Pressure (bar)' },
+                { field: 'Temperature' as SortField, label: 'Temp (°C)' },
+              ]).map((col) => (
                 <th
                   key={col.field}
                   onClick={() => handleSort(col.field)}
@@ -121,29 +124,29 @@ const DataTable: React.FC<Partial<DataTableProps>> = ({ data }) => {
           <tbody>
             {sortedData.map((equipment, index) => (
               <tr
-                key={`${equipment.name}-${index}`}
+                key={`${equipment['Equipment Name']}-${index}`}
                 className="border-b border-slate-200 transition hover:bg-slate-50"
               >
                 <td className="px-6 py-4 font-medium text-slate-900">
-                  {equipment.name}
+                  {equipment['Equipment Name']}
                 </td>
                 <td className="px-6 py-4">
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${typeBadge(
-                      equipment.type
+                      equipment.Type
                     )}`}
                   >
-                    {equipment.type}
+                    {equipment.Type}
                   </span>
                 </td>
                 <td className="px-6 py-4 font-mono text-sm text-slate-600">
-                  {equipment.flowrate.toFixed(1)}
+                  {parseFloat(equipment.Flowrate).toFixed(1)}
                 </td>
                 <td className="px-6 py-4 font-mono text-sm text-slate-600">
-                  {equipment.pressure.toFixed(1)}
+                  {parseFloat(equipment.Pressure).toFixed(1)}
                 </td>
                 <td className="px-6 py-4 font-mono text-sm text-slate-600">
-                  {equipment.temperature.toFixed(1)}
+                  {parseFloat(equipment.Temperature).toFixed(1)}
                 </td>
               </tr>
             ))}

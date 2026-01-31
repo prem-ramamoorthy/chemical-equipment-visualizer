@@ -23,6 +23,8 @@ interface GroupedAnalyticsProps {
   data: Record<string, EquipmentAnalytics>;
 }
 
+const round2 = (value: number) => Number(value).toFixed(2);
+
 const MetricBlock = ({
   title,
   icon: Icon,
@@ -41,10 +43,10 @@ const MetricBlock = ({
     </div>
 
     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-      <Stat label="Mean" value={`${stats.mean}${unit}`} />
-      <Stat label="Std" value={stats.std} />
-      <Stat label="Min" value={`${stats.min}${unit}`} />
-      <Stat label="Max" value={`${stats.max}${unit}`} />
+      <Stat label="Mean" value={`${round2(stats.mean)}${unit}`} />
+      <Stat label="Std" value={round2(stats.std)} />
+      <Stat label="Min" value={`${round2(stats.min)}${unit}`} />
+      <Stat label="Max" value={`${round2(stats.max)}${unit}`} />
     </div>
   </div>
 );
@@ -119,7 +121,6 @@ const GroupedEquipmentAnalytics: React.FC<Partial<GroupedAnalyticsProps>> = ({ d
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {[1, 2, 3].map((j) => (
                   <div
-
                     key={j}
                     className="rounded-lg border border-slate-200 bg-slate-50 p-4"
                   >

@@ -1,4 +1,4 @@
-import type { Equipment, DatasetSummary } from '../types/dataset';
+import type { Equipment, DatasetSummary, ChartsGridSummary, EquipmentRecord } from '../types/dataset';
 
 const mockEquipment1: Equipment[] = [
   { name: 'P-101', type: 'Pump', flowrate: 125.5, pressure: 3.2, temperature: 45.0 },
@@ -56,41 +56,50 @@ export const mockLogin = async (username: string, password: string): Promise<boo
   return false;
 };
 
-export const mockUploadCSV = async (file: File, url: string): Promise<DatasetSummary> => {
-  const serverData = await uploadCSVToServer(file, url);
-
-  if (Array.isArray(serverData) && serverData.length > 0 && serverData[0].name && serverData[0].type) {
-    const equipmentData: Equipment[] = serverData.map((item: any) => ({
-      name: item.name,
-      type: item.type,
-      flowrate: parseFloat(item.flowrate),
-      pressure: parseFloat(item.pressure),
-      temperature: parseFloat(item.temperature),
-    }));
-    return {
-      ...calculateSummary(Date.now(), equipmentData),
-      id: Date.now(),
-    };
-  }
-
-  const randomIndex = Math.floor(Math.random() * mockDatasets.length);
-  const dataset = mockDatasets[randomIndex];
-  return {
-    ...dataset,
-    id: Date.now(),
-  };
+export const mockUploadCSV = async (file: File, url: string): Promise<{serverdata: ChartsGridSummary} & { data: EquipmentRecord[] }> => {
+  const data = await uploadCSVToServer(file, url);
+  return data;
 };
 
-export const uploadCSVToServer = async (file: File, url: string): Promise<any> => {
+export const uploadCSVToServer = async (
+  file: File,
+  url: string
+): Promise<{ serverdata: ChartsGridSummary; data: EquipmentRecord[] }> => {
   const text = await file.text();
-  const rows = text.trim().split('\n');
-  const headers = rows[0].split(',');
-  const data = rows.slice(1).map(row => {
-    const values = row.split(',');
+
+  const rows = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (rows.length < 2) {
+    throw new Error('CSV must have at least a header and one data row.');
+  }
+
+  const headers = rows[0].split(',').map((h) => h.trim());
+
+  const data = rows.slice(1).map((row) => {
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+      if (char === '"' && (i === 0 || row[i - 1] !== '\\')) {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+
     return headers.reduce((obj, header, idx) => {
-      obj[header.trim()] = values[idx]?.trim();
+      obj[header] = values[idx] ?? '';
       return obj;
-    }, {} as Record<string, string>);
+    }, {} as EquipmentRecord);
   });
 
   const response = await fetch(url, {
@@ -103,7 +112,9 @@ export const uploadCSVToServer = async (file: File, url: string): Promise<any> =
     throw new Error('Failed to upload CSV');
   }
 
-  return response.json();
+  const serverdata = await response.json();
+
+  return { serverdata, data };
 };
 
 export const getDatasetById = (id: number): DatasetSummary | undefined => {
