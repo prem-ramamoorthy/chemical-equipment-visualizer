@@ -4,7 +4,7 @@ import FileUpload from "../components/FileUpload";
 import AdvancedChartsGrid from "../components/AdvancedChartsGrid";
 import DataTable from "../components/DataTable";
 import HistoryList from "../components/HistoryList";
-import type { DatasetSummary, UploadHistory, ChartsGridSummary, EquipmentRecord } from "../types/dataset";
+import type { UploadHistory, ChartsGridSummary, EquipmentRecord } from "../types/dataset";
 import { mockUploadCSV } from "../api/apiClient";
 import DistributionAnalysis from "../components/DistributionAnalysis";
 import StatisticalSummary from "../components/StatisticalSummary";
@@ -20,7 +20,7 @@ const Dashboard = () => {
   const [currentDataset, setCurrentDataset] =
     useState<ChartsGridSummary | null>(null);
 
-  const [datasets, setDatasets] = useState<Map<number, DatasetSummary>>(
+  const [datasets, setDatasets] = useState<Map<number, {dataset: ChartsGridSummary, data: EquipmentRecord[]}>>(
     new Map()
   );
 
@@ -50,7 +50,7 @@ const Dashboard = () => {
       setData(data);
       setDatasets((prev) => {
         const next = new Map(prev);
-        next.set(dataset.id, dataset);
+        next.set(dataset.id, {dataset : dataset, data : data});
         return next;
       });
 
@@ -73,7 +73,8 @@ const Dashboard = () => {
   const handleSelectDataset = useCallback(
     (datasetId: number) => {
       const dataset = datasets.get(datasetId);
-      if (dataset) setCurrentDataset(dataset);
+      if (dataset) setCurrentDataset(dataset.dataset);
+      if (dataset) setData(dataset.data);
     },
     [datasets]
   );

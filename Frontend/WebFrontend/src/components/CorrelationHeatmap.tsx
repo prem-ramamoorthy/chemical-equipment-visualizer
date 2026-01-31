@@ -18,24 +18,34 @@ ChartJS.register(
   Legend
 );
 
-interface CorrelationHeatmapProps {
-  labels: string[];
-  matrix: number[][];
+export interface CorrelationDatum {
+  x: string;
+  y: string;
+  v: number;
 }
 
-const HeatmapChart: React.FC<CorrelationHeatmapProps> = ({ labels, matrix }) => {
-  const data = {
+interface CorrelationHeatmapProps {
+  data: CorrelationDatum[];
+}
+
+const getUniqueLabels = (data: CorrelationDatum[]): string[] => {
+  const labels = new Set<string>();
+  data.forEach((d) => {
+    labels.add(d.x);
+    labels.add(d.y);
+  });
+  return Array.from(labels);
+};
+
+const HeatmapChart: React.FC<CorrelationHeatmapProps> = ({ data }) => {
+  const labels = getUniqueLabels(data);
+
+  const chartData = {
     datasets: [
       {
         label: 'Correlation',
-        data: matrix.flatMap((row, i) =>
-          row.map((value, j) => ({
-            x: labels[j],
-            y: labels[i],
-            v: value,
-          }))
-        ),
-        backgroundColor: (ctx: any) => {
+        data,
+        backgroundColor: (ctx: { raw: CorrelationDatum }) => {
           const value = ctx.raw.v;
           const alpha = Math.abs(value);
           return value > 0
@@ -44,10 +54,10 @@ const HeatmapChart: React.FC<CorrelationHeatmapProps> = ({ labels, matrix }) => 
         },
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.8)',
-        width: ({ chart }: any) =>
-          (chart.chartArea || {}).width / labels.length - 2,
-        height: ({ chart }: any) =>
-          (chart.chartArea || {}).height / labels.length - 2,
+        width: ({ chart }: { chart: { chartArea?: { width: number } } }) =>
+          (chart.chartArea?.width ?? 0) / labels.length - 2,
+        height: ({ chart }: { chart: { chartArea?: { height: number } } }) =>
+          (chart.chartArea?.height ?? 0) / labels.length - 2,
       },
     ],
   };
@@ -60,7 +70,7 @@ const HeatmapChart: React.FC<CorrelationHeatmapProps> = ({ labels, matrix }) => 
       tooltip: {
         backgroundColor: 'hsl(215, 25%, 15%)',
         callbacks: {
-          label: (ctx: any) => `Correlation: ${ctx.raw.v.toFixed(2)}`,
+          label: (ctx: { raw: CorrelationDatum }) => `Correlation: ${ctx.raw.v.toFixed(2)}`,
         },
       },
     },
@@ -88,7 +98,7 @@ const HeatmapChart: React.FC<CorrelationHeatmapProps> = ({ labels, matrix }) => 
       <div className="h-80">
         <SafeChart
           type="matrix"
-          data={data}
+          data={chartData}
           options={options}
           chartKey="correlation-heatmap"
         />

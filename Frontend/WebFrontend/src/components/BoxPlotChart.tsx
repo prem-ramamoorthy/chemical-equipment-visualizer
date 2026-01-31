@@ -26,28 +26,18 @@ ChartJS.register(
 
 interface BoxPlotProps {
   data: {
-    label: string;
-    min: number;
-    q1: number;
-    median: number;
-    q3: number;
-    max: number;
-  }[];
+    labels: string[];
+    values: number[][];
+  };
 }
 
 const BoxPlotChart: React.FC<BoxPlotProps> = ({ data }) => {
   const chartData = {
-    labels: data.map(d => d.label),
+    labels: data.labels,
     datasets: [
       {
         label: 'Statistical Distribution',
-        data: data.map(d => ({
-          min: d.min,
-          q1: d.q1,
-          median: d.median,
-          q3: d.q3,
-          max: d.max,
-        })),
+        data: data.values,
         backgroundColor: 'hsl(210, 85%, 55%)',
         borderColor: 'hsl(215, 25%, 25%)',
         borderWidth: 1.5,
@@ -95,7 +85,7 @@ const BoxPlotChart: React.FC<BoxPlotProps> = ({ data }) => {
       <div className="mb-4 flex items-center gap-2">
         <Activity className="h-5 w-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-slate-900">
-          Distribution Analysis (Box Plot)
+          Pressure Distribution by Equipment Type
         </h3>
       </div>
 
