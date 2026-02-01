@@ -45,7 +45,7 @@ python main.py
 Ensure the backend is running at:
 
 ```
-http://localhost:8000
+http://localhost:8000 || https://fosseebackend-production.up.railway.app
 ```
 
 API base URL can be changed inside:

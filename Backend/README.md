@@ -44,7 +44,7 @@ python manage.py migrate
 ### ▶ Run Server
 
 ```bash
-python manage.py runserver
+python manage.py runserver localhost:8000
 ```
 
 Server runs at:  

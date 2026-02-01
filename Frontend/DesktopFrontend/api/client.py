@@ -1,13 +1,15 @@
 import time
 import random
 import requests
+import os
 
 def mockLogin(username, password):
     if not username.strip() or not password.strip():
         return {"success": False, "error": "Please enter both username and password"}
     try:
+        API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api")
         response = requests.post(
-            "http://localhost:8000/api/auth/login/",
+            f"{API_BASE_URL}/auth/login/",
             json={"username": username, "password": password},
             headers={"Content-Type": "application/json"},
             timeout=5
@@ -69,13 +71,14 @@ def signup_user(username, email, password, confirm_password):
         return {"success": False, "error": "Passwords do not match"}
 
     try:
+        backend_url = os.getenv("API_BASE_URL", "http://localhost:8000/api")
         response = requests.post(
-            "http://localhost:8000/api/auth/register/",
+            f"{backend_url}/auth/register/",
             json={
-                "username": username,
-                "email": email,
-                "password": password,
-                "password2": confirm_password,
+            "username": username,
+            "email": email,
+            "password": password,
+            "password2": confirm_password,
             },
             headers={"Content-Type": "application/json"},
             timeout=5
@@ -95,8 +98,9 @@ def signup_user(username, email, password, confirm_password):
     
 def logout_user():
     try:
+        backend_url = os.getenv("API_BASE_URL", "http://localhost:8000/api")
         response = requests.post(
-            "http://localhost:8000/api/auth/logout/",
+            f"{backend_url}/auth/logout/",
             headers={"Content-Type": "application/json"},
         )
         return response.ok

@@ -40,7 +40,7 @@ python -m venv .venv
 pip install -r requirements.txt
 
 python manage.py migrate
-python manage.py runserver 8000
+python manage.py runserver localhost:8000
 ```
 
 API base URL: `http://localhost:8000/api`
@@ -57,7 +57,7 @@ Web app URL: `http://localhost:5173`
 
 Environment config: `Frontend/WebFrontend/.env`
 ```
-VITE_API_BASE_URL="http://localhost:8000/api"
+VITE_API_BASE_URL="https://fosseebackend-production.up.railway.app/api"
 ```
 
 ### 3) Desktop frontend
@@ -73,12 +73,12 @@ python main.py
 
 Environment config: `Frontend/DesktopFrontend/.env`
 ```
-API_BASE_URL=http://localhost:8000/api
+API_BASE_URL=https://fosseebackend-production.up.railway.app/api
 ```
 
 ## API overview
 
-Base URL: `http://localhost:8000/api`
+Base URL: `https://fosseebackend-production.up.railway.app/api`
 
 - `POST /datasets/upload/`
   - Body: JSON array of equipment records
@@ -107,10 +107,10 @@ Equipment Name,Type,Flowrate,Pressure,Temperature
 
 - Default database: SQLite at `Backend/config/db.sqlite3`
 - History endpoint returns up to the last 5 datasets
-- CORS allows `http://localhost:5173`
+- CORS allows `http://localhost:5173, https://chemical-equipment-visualizer-six.vercel.app, https://fosseebackend-production.up.railway.app`
 
 ## Troubleshooting
 
-- Backend not reachable: ensure `python manage.py runserver 8000` is running.
+- Backend not reachable: ensure `python manage.py runserver localhost:8000` is running.
 - CORS errors in the web app: confirm the frontend URL matches `CORS_ALLOWED_ORIGINS` in `Backend/config/config/settings.py`.
 - Desktop app cannot log in: verify `API_BASE_URL` in `Frontend/DesktopFrontend/.env`.

@@ -47,7 +47,10 @@ App runs at:
 Create a `.env` file:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_BASE_URL="https://fosseebackend-production.up.railway.app/api"
+
+# For local backend:
+ VITE_API_BASE_URL="http://localhost:8000/api"
 ```
 
 ---
