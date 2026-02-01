@@ -4,7 +4,7 @@ import FileUpload from "../components/FileUpload";
 import AdvancedChartsGrid from "../components/AdvancedChartsGrid";
 import DataTable from "../components/DataTable";
 import HistoryList from "../components/HistoryList";
-import type { UploadHistory, ChartsGridSummary, EquipmentRecord } from "../types/dataset";
+import type { UploadHistory, ChartsGridSummary, EquipmentRecord, DatasetSummary } from "../types/dataset";
 import { mockUploadCSV } from "../api/apiClient";
 import DistributionAnalysis from "../components/DistributionAnalysis";
 import StatisticalSummary from "../components/StatisticalSummary";
@@ -20,7 +20,7 @@ const Dashboard = () => {
   const [currentDataset, setCurrentDataset] =
     useState<ChartsGridSummary | null>(null);
 
-  const [datasets, setDatasets] = useState<Map<number, { dataset: ChartsGridSummary, data: EquipmentRecord[] }>>(
+  const [datasets, setDatasets] = useState<Map<number, DatasetSummary>>(
     new Map()
   );
 
@@ -33,14 +33,14 @@ const Dashboard = () => {
         });
         const result = await response.json();
 
-        const datasetsMap = new Map<number, { dataset: ChartsGridSummary, data: EquipmentRecord[] }>();
+        const datasetsMap = new Map<number, DatasetSummary>();
         const uploadHistoryArr: UploadHistory[] = [];
 
         if (result && Array.isArray(result.order) && typeof result.datasets === "object") {
           for (const id of result.order) {
             const dsObj = result.datasets[id];
-            if (dsObj) {
-              datasetsMap.set(Number(id), { dataset: dsObj.dataset, data: dsObj.data });
+            if (dsObj && dsObj.dataset) {
+              datasetsMap.set(Number(id), dsObj.dataset);
               uploadHistoryArr.push({
                 id: Number(id),
                 filename: dsObj.meta?.name ?? `dataset_${id}`,
@@ -94,7 +94,7 @@ const Dashboard = () => {
       setData(data);
       setDatasets((prev) => {
         const next = new Map(prev);
-        next.set(dataset.id, { dataset: dataset, data: data });
+        next.set(dataset.id, dataset);
         return next;
       });
 
@@ -117,8 +117,7 @@ const Dashboard = () => {
   const handleSelectDataset = useCallback(
     (datasetId: number) => {
       const dataset = datasets.get(datasetId);
-      if (dataset) setCurrentDataset(dataset.dataset);
-      if (dataset) setData(dataset.data);
+      if (dataset) setCurrentDataset(dataset);
     },
     [datasets]
   );
