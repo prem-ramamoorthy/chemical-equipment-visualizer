@@ -1,43 +1,87 @@
-# Backend (Django REST API)
+# Backend – Django REST API
 
-This service powers dataset ingestion, analytics, and authentication for the Chemical Equipment Visualizer.
+This backend provides all analytics, authentication, and dataset storage for the Chemical Equipment Visualizer.
 
-## Requirements
+---
 
-- Python 3.10+ (recommended)
-- See `Backend/config/requirements.txt`
+## 🧠 Responsibilities
 
-## Setup
+- Accept dataset uploads (JSON)
+- Perform statistical analytics using Pandas
+- Store datasets in SQLite
+- Expose REST APIs for Web & Desktop clients
+- Manage dataset history (last 5 uploads)
 
-```powershell
-cd Backend\config
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+---
+
+## 🛠 Tech Stack
+
+- Python 3.12+
+- Django
+- Django REST Framework
+- Pandas
+- NumPy
+- SQLite (persistent on Railway)
+
+---
+
+## 📦 Setup (Local)
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate   # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-python manage.py migrate
-python manage.py runserver 8000
 ```
 
-API base URL: `http://localhost:8000/api`
+### 🗄 Database Setup
 
-## Endpoints
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
-- `POST /api/datasets/upload/`
-  - Body: JSON array of equipment records
-  - Required keys per record:
-    - `Equipment Name`
-    - `Type`
-    - `Flowrate`
-    - `Pressure`
-    - `Temperature`
-- `GET /api/datasets/history/?limit=5` (limit clamped 1–5)
-- `POST /api/auth/register/`
-- `POST /api/auth/login/`
-- `POST /api/auth/logout/`
-- `GET /api/auth/me/`
+### ▶ Run Server
 
-## Notes
+```bash
+python manage.py runserver
+```
 
-- Default database is SQLite at `Backend/config/db.sqlite3`.
-- CORS is configured for `http://localhost:5173`.
+Server runs at:  
+http://localhost:8000
+
+---
+
+## 🔐 Authentication APIs
+
+| Method | Endpoint                |
+|--------|-------------------------|
+| POST   | /api/auth/register/     |
+| POST   | /api/auth/login/        |
+| POST   | /api/auth/logout/       |
+| GET    | /api/auth/me/           |
+
+Authentication is session-based; cookies are required.
+
+---
+
+## 📊 Dataset APIs
+
+| Method | Endpoint                  |
+|--------|---------------------------|
+| POST   | /api/datasets/upload/     |
+| GET    | /api/datasets/history/    |
+
+**Upload format:**
+
+```json
+[
+  {
+    "Equipment Name": "Pump-1",
+    "Type": "Pump",
+    "Flowrate": "120",
+    "Pressure": "5.2",
+    "Temperature": "110"
+  }
+]
+```
