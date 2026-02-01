@@ -17,9 +17,8 @@ class FileUpload(QWidget):
         card = QFrame()
         card.setStyleSheet("""
             QFrame {
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 14px;
+                background: transparent;
+                border: none;
             }
         """)
 
@@ -38,13 +37,12 @@ class FileUpload(QWidget):
         self.drop_area.setCursor(Qt.PointingHandCursor)
         self.drop_area.setStyleSheet("""
             QFrame {
-                border: 2px dashed #cbd5e1;
-                border-radius: 10px;
-                background: #f8fafc;
+                border: none;
+                background: transparent;
             }
             QFrame:hover {
-                border-color: #3b82f6;
-                background: #f1f5f9;
+                border: none;
+                background: transparent;
             }
         """)
 

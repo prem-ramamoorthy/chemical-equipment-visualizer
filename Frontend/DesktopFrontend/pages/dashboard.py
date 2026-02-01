@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QScrollArea, QSizePolicy
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
 from components.navbar import Navbar
 from components.advanced_charts_grid import (
@@ -48,15 +48,96 @@ from components.grouped_equipment_analytics import (
 )
 
 from typing import List, Dict, Any, Tuple, Optional
+from datetime import datetime
+import os
+import requests
 
+class UploadWorker(QThread):
+    finished = pyqtSignal(dict, list)
+    error = pyqtSignal(str)
+
+    def __init__(self, file_path: str, api_base_url: str):
+        super().__init__()
+        self.file_path = file_path
+        self.api_base_url = api_base_url
+
+    def run(self):
+        try:
+            with open(self.file_path, 'r', encoding='utf-8') as f:
+                text = f.read()
+
+            rows = [line.strip() for line in text.split('\n') if line.strip()]
+            if len(rows) < 2:
+                self.error.emit('CSV must have at least a header and one data row.')
+                return
+
+            headers = [h.strip() for h in rows[0].split(',')]
+            data = []
+            for row in rows[1:]:
+                values = []
+                current = ''
+                in_quotes = False
+                for i, char in enumerate(row):
+                    if char == '"' and (i == 0 or row[i - 1] != '\\'):
+                        in_quotes = not in_quotes
+                    elif char == ',' and not in_quotes:
+                        values.append(current.strip().strip('"'))
+                        current = ''
+                    else:
+                        current += char
+                values.append(current.strip().strip('"'))
+                record = {headers[idx]: values[idx] if idx < len(values) else '' for idx in range(len(headers))}
+                data.append(record)
+
+            response = requests.post(
+                f"{self.api_base_url}/datasets/upload/",
+                json=data,
+                headers={'Content-Type': 'application/json'}
+            )
+            if not response.ok:
+                self.error.emit('Failed to upload CSV')
+                return
+
+            serverdata = response.json()
+            self.finished.emit(serverdata, data)
+        except Exception as e:
+            self.error.emit(str(e))
+class FetchWorker(QThread):
+    finished = pyqtSignal(dict)
+    error = pyqtSignal(str)
+
+    def __init__(self, api_base_url: str):
+        super().__init__()
+        self.api_base_url = api_base_url
+
+    def run(self):
+        try:
+            response = requests.get(
+                f"{self.api_base_url}/datasets/history/",
+            )
+            if not response.ok:
+                self.error.emit('Failed to fetch datasets')
+                return
+            result = response.json()
+            self.finished.emit(result)
+        except Exception as e:
+            self.error.emit(str(e))
 class DashboardPage(QWidget):
     def __init__(self, app, username: str = "Guest"):
         super().__init__()
         self.app = app
         self.setObjectName("Dashboard")
         self.username = username
+        self.api_base_url = os.environ.get("API_BASE_URL", "http://localhost:8000/api")
+
+        self.datasets: Dict[int, Dict[str, Any]] = {}
+        self.upload_history: List[Dict[str, Any]] = []
+        self.current_dataset: Optional[Dict[str, Any]] = None
+        self.current_data: List[Dict[str, Any]] = []
+        self.is_uploading = False
+
         self.init_ui()
-        self.load_advanced_from_mock()
+        self.fetch_initial_datasets()
 
     def init_ui(self):
         self.setStyleSheet("""
@@ -105,7 +186,8 @@ class DashboardPage(QWidget):
         sidebar.setAlignment(Qt.AlignTop)
 
         self.upload = FileUpload(self.on_upload)
-        self.history = HistoryList(self.on_select)
+        self.history = HistoryList()
+        self.history.dataset_selected.connect(self.on_select)
 
         self.wrap_card(self.upload, sidebar)
         self.wrap_card(self.history, sidebar)
@@ -113,7 +195,7 @@ class DashboardPage(QWidget):
         main = QVBoxLayout()
         main.setSpacing(24)
         main.setAlignment(Qt.AlignTop)
-        
+
         self.advanced = AdvancedChartsGridWidget()
         self.advanced.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.wrap_card(self.advanced, main, expand=True)
@@ -155,25 +237,217 @@ class DashboardPage(QWidget):
             widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(card, stretch=1 if expand else 0)
 
-    def load_advanced_from_mock(self):
-        raw = [
-            {"Equipment Name":"Reactor-1","Type":"Reactor","Flowrate":"133.4","Pressure":"7.0","Temperature":"135.6"},
-            {"Equipment Name":"Condenser-8","Type":"Condenser","Flowrate":"169.9","Pressure":"7.2","Temperature":"130.2"},
-        ]
-        summary = self.build_charts_grid_summary(raw)
-        self.advanced.set_summary(summary)
-        stat_summary = self.build_statistical_summary(raw)
-        self.stat_summary.set_data(stat_summary)
-        corr_matrix = self._build_correlation_matrix_dict(raw)
-        self.corr_insights.set_matrix(corr_matrix)
-        cond_data = self._build_conditional_analysis_data(raw)
-        self.conditional_analysis.set_data(cond_data)
-        dist_data = self._build_distribution_analysis_data(raw, column="Flowrate", title="Flowrate", unit=" kg/h")
-        self.distribution_analysis.set_data(dist_data)
-        ranking_data = self._build_equipment_ranking_data(raw)
-        self.equipment_ranking.set_data(ranking_data)
-        grouped_data = self._build_grouped_equipment_analytics_data(raw)
-        self.grouped_analytics.set_data(grouped_data)
+    def fetch_initial_datasets(self):
+        self.fetch_worker = FetchWorker(self.api_base_url)
+        self.fetch_worker.finished.connect(self.on_fetch_finished)
+        self.fetch_worker.error.connect(self.on_fetch_error)
+        self.fetch_worker.start()
+
+    def on_fetch_finished(self, result: dict):
+        datasets_map: Dict[int, Dict[str, Any]] = {}
+        upload_history_arr: List[Dict[str, Any]] = []
+
+        if result and isinstance(result.get("order"), list) and isinstance(result.get("datasets"), dict):
+            for id_ in result["order"]:
+                ds_obj = result["datasets"].get(str(id_))
+                if ds_obj:
+                    datasets_map[int(id_)] = {
+                        "dataset": ds_obj.get("dataset"),
+                        "data": ds_obj.get("data", [])
+                    }
+                    meta = ds_obj.get("meta", {})
+                    upload_history_arr.append({
+                        "id": int(id_),
+                        "filename": meta.get("name", f"dataset_{id_}"),
+                        "uploadedAt": datetime.fromisoformat(meta["uploaded_at"]) if meta.get("uploaded_at") else datetime.now(),
+                        "datasetId": int(id_),
+                    })
+
+        self.datasets = datasets_map
+        self.upload_history = upload_history_arr[:5]
+        self.history.set_history(self.upload_history, self.datasets)
+
+        if result.get("order") and len(result["order"]) > 0:
+            first_id = result["order"][0]
+            first = result["datasets"].get(str(first_id))
+            if first:
+                self.current_dataset = first.get("dataset")
+                self.current_data = first.get("data", [])
+                self.update_ui_with_data(self.current_dataset, self.current_data)
+
+    def on_fetch_error(self, error: str):
+        print(f"Failed to fetch datasets: {error}")
+
+    def on_upload(self, file_path: str, filename: str):
+        if self.is_uploading:
+            return
+        self.is_uploading = True
+        self.upload.set_loading(True)
+
+        self.upload_worker = UploadWorker(file_path, self.api_base_url)
+        self.upload_worker.finished.connect(lambda serverdata, data: self.on_upload_finished(serverdata, data, filename))
+        self.upload_worker.error.connect(self.on_upload_error)
+        self.upload_worker.start()
+
+    def on_upload_finished(self, serverdata: dict, data: list, filename: str):
+        self.is_uploading = False
+        self.upload.set_loading(False)
+
+        dataset_id = serverdata.get("id", int(datetime.now().timestamp() * 1000))
+        self.datasets[dataset_id] = {
+            "dataset": serverdata,
+            "data": data
+        }
+
+        history_item = {
+            "id": int(datetime.now().timestamp() * 1000),
+            "filename": filename,
+            "uploadedAt": datetime.now(),
+            "datasetId": dataset_id,
+        }
+        self.upload_history = [history_item] + self.upload_history
+        self.upload_history = self.upload_history[:5]
+        self.history.set_history(self.upload_history, self.datasets)
+
+        self.current_dataset = serverdata
+        self.current_data = data
+        self.update_ui_with_data(serverdata, data)
+
+    def on_upload_error(self, error: str):
+        self.is_uploading = False
+        self.upload.set_loading(False)
+        print(f"Upload failed: {error}")
+
+    def on_select(self, dataset_id: int):
+        dataset_entry = self.datasets.get(dataset_id)
+        if dataset_entry:
+            self.current_dataset = dataset_entry["dataset"]
+            self.current_data = dataset_entry["data"]
+            self.update_ui_with_data(self.current_dataset, self.current_data)
+
+    def update_ui_with_data(self, dataset: Optional[Dict[str, Any]], data: List[Dict[str, Any]]):
+        if dataset:
+            # If server returns pre-computed summaries
+            if "StatisticalSummary" in dataset:
+                stat_data = dataset.get("StatisticalSummary", {}).get("data")
+                if stat_data:
+                    self.stat_summary.set_data(self._parse_statistical_summary(stat_data))
+            else:
+                stat_summary = self.build_statistical_summary(data)
+                self.stat_summary.set_data(stat_summary)
+
+            if "CorrelationInsights" in dataset:
+                corr_matrix = dataset.get("CorrelationInsights", {}).get("matrix")
+                if corr_matrix:
+                    self.corr_insights.set_matrix(corr_matrix)
+            else:
+                corr_matrix = self._build_correlation_matrix_dict(data)
+                self.corr_insights.set_matrix(corr_matrix)
+
+            if "ConditionalAnalysis" in dataset:
+                cond = dataset.get("ConditionalAnalysis", {})
+                cond_data = ConditionalAnalysisData(
+                    conditionLabel=cond.get("conditionLabel", ""),
+                    totalRecords=cond.get("totalRecords", 0),
+                    stats=ConditionalStats(
+                        flowrate=cond.get("stats", {}).get("flowrate", 0),
+                        pressure=cond.get("stats", {}).get("pressure", 0),
+                        temperature=cond.get("stats", {}).get("temperature", 0),
+                    ) if cond.get("stats") else None,
+                )
+                self.conditional_analysis.set_data(cond_data)
+            else:
+                cond_data = self._build_conditional_analysis_data(data)
+                self.conditional_analysis.set_data(cond_data)
+
+            if "DistributionAnalysis" in dataset:
+                dist = dataset.get("DistributionAnalysis", {})
+                dist_stats = dist.get("stats", {})
+                dist_data = DistributionAnalysisData(
+                    title=dist.get("title", ""),
+                    unit=dist.get("unit", ""),
+                    stats=DistributionStats(
+                        min=dist_stats.get("min", 0),
+                        q1=dist_stats.get("q1", 0),
+                        median=dist_stats.get("median", 0),
+                        q3=dist_stats.get("q3", 0),
+                        max=dist_stats.get("max", 0),
+                        outliers=dist_stats.get("outliers"),
+                    ) if dist_stats else None,
+                )
+                self.distribution_analysis.set_data(dist_data)
+            else:
+                dist_data = self._build_distribution_analysis_data(data)
+                self.distribution_analysis.set_data(dist_data)
+
+            if "EquipmentPerformanceRanking" in dataset:
+                ranking = dataset.get("EquipmentPerformanceRanking", {})
+                ranking_data = {}
+                for name, metrics in ranking.items():
+                    ranking_data[name] = PerformanceMetrics(
+                        flowrate=metrics.get("flowrate", 0),
+                        pressure=metrics.get("pressure", 0),
+                        temperature=metrics.get("temperature", 0),
+                    )
+                self.equipment_ranking.set_data(ranking_data)
+            else:
+                ranking_data = self._build_equipment_ranking_data(data)
+                self.equipment_ranking.set_data(ranking_data)
+
+            if "GroupedEquipmentAnalytics" in dataset:
+                grouped = dataset.get("GroupedEquipmentAnalytics", {})
+                grouped_data = {}
+                for typ, analytics in grouped.items():
+                    grouped_data[typ] = EquipmentAnalytics(
+                        flowrate=self._parse_metric_stats(analytics.get("flowrate")),
+                        pressure=self._parse_metric_stats(analytics.get("pressure")),
+                        temperature=self._parse_metric_stats(analytics.get("temperature")),
+                    )
+                self.grouped_analytics.set_data(grouped_data)
+            else:
+                grouped_data = self._build_grouped_equipment_analytics_data(data)
+                self.grouped_analytics.set_data(grouped_data)
+
+            # Charts grid
+            summary = self.build_charts_grid_summary(data)
+            self.advanced.set_summary(summary)
+        else:
+            # Clear UI or show empty state
+            self.advanced.set_summary(None)
+            self.stat_summary.set_data(None)
+            self.corr_insights.set_matrix({})
+            self.conditional_analysis.set_data(None)
+            self.distribution_analysis.set_data(None)
+            self.equipment_ranking.set_data(None)
+            self.grouped_analytics.set_data(None)
+
+    def _parse_metric_stats(self, data: Optional[Dict[str, Any]]) -> MetricStats:
+        if not data:
+            return MetricStats(0, 0, 0, 0)
+        return MetricStats(
+            mean=data.get("mean", 0),
+            std=data.get("std", 0),
+            min=data.get("min", 0),
+            max=data.get("max", 0),
+        )
+
+    def _parse_statistical_summary(self, data: Dict[str, Any]) -> StatisticalSummaryData:
+        def parse_col(col: Dict[str, Any]) -> StatColumn:
+            return StatColumn(
+                count=col.get("count", 0),
+                mean=col.get("mean", 0),
+                std=col.get("std", 0),
+                min=col.get("min", 0),
+                q1=col.get("q1", 0),
+                median=col.get("median", 0),
+                q3=col.get("q3", 0),
+                max=col.get("max", 0),
+            )
+        return StatisticalSummaryData(
+            flowrate=parse_col(data.get("flowrate", {})),
+            pressure=parse_col(data.get("pressure", {})),
+            temperature=parse_col(data.get("temperature", {})),
+        )
 
     def build_charts_grid_summary(self, records: List[Dict[str, Any]]) -> ChartsGridSummary:
         flow, pres, temp, types = [], [], [], []
@@ -474,12 +748,6 @@ class DashboardPage(QWidget):
                 temperature=stats(temps),
             )
         return result if result else None
-
-    def on_upload(self, filename: str):
-        self.load_advanced_from_mock()
-
-    def on_select(self, dataset: Any):
-        self.load_advanced_from_mock()
 
     def logout(self):
         logout_user()
