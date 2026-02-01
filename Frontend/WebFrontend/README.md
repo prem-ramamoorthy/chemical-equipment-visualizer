@@ -1,36 +1,85 @@
-# Web Frontend (React + Vite)
+# Web Frontend – React + TypeScript
 
-Web UI for the Chemical Equipment Visualizer. Upload CSV datasets, explore analytics, and review dataset history.
+This is the **web interface** of the Chemical Equipment Parameter Visualizer.
 
-## Requirements
+---
 
-- Node.js 18+ (recommended)
-- npm (or your preferred package manager)
+## 🧠 Responsibilities
 
-## Setup
+- User authentication
+- Dataset upload
+- Visualization of analytics
+- Dataset history navigation
+- Interactive charts & tables
 
-```powershell
-cd Frontend\WebFrontend
+---
+
+## 🛠 Tech Stack
+
+- React
+- TypeScript (TSX)
+- Tailwind CSS
+- Chart.js
+- Vite
+
+---
+
+## 📦 Setup
+
+```bash
+cd frontend/webfrontend
 npm install
+```
+
+### ▶ Run Development Server
+
+```bash
 npm run dev
 ```
 
-The app runs at `http://localhost:5173` by default.
+App runs at:  
+[http://localhost:5173](http://localhost:5173)
 
-## Configuration
+---
 
-Set the API base URL in `Frontend/WebFrontend/.env`:
+### 🔗 Environment Variables
 
+Create a `.env` file:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
 ```
-VITE_API_BASE_URL="http://localhost:8000/api"
+
+---
+
+## 📊 Components
+
+- AdvancedChartsGrid
+- DistributionAnalysis
+- StatisticalSummary
+- CorrelationInsights
+- ConditionalAnalysis
+- EquipmentPerformanceRanking
+- GroupedEquipmentAnalytics
+- DataTable
+- HistoryList
+
+---
+
+## 🔄 Data Flow
+
+1. User uploads dataset
+2. Frontend sends JSON to backend
+3. Backend returns ChartsGridSummary
+4. Frontend renders analytics dynamically
+
+---
+
+## 🚀 Production Build
+
+```bash
+npm run build
 ```
 
-## Notes
+Deployable to Vercel or any static host.
 
-- The backend must be running for API calls.
-- CSV headers should include:
-  - `Equipment Name`
-  - `Type`
-  - `Flowrate`
-  - `Pressure`
-  - `Temperature`
