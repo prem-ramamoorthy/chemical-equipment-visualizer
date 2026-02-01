@@ -17,11 +17,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='dataset',
             name='raw_data',
-            field=models.JSONField(blank=True, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
             model_name='dataset',
             name='summary',
-            field=models.JSONField(blank=True, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
     ]

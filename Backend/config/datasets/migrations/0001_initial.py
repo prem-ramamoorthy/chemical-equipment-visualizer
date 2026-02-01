@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=255)),
                 ('file', models.FileField(upload_to='csv/')),
                 ('uploaded_at', models.DateTimeField(auto_now_add=True)),
-                ('summary', models.JSONField()),
+                ('summary', models.TextField(null=True, blank=True)),
             ],
         ),
     ]
