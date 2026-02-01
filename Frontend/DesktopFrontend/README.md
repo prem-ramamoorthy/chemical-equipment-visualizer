@@ -1,32 +1,66 @@
-# Desktop Frontend (PyQt5)
+# Desktop Frontend – PyQt5
 
-PyQt5 desktop application for the Chemical Equipment Visualizer. Connects to the Django API for auth and dataset history.
+This is the **desktop application** version of the Chemical Equipment Parameter Visualizer.
 
-## Requirements
+---
 
-- Python 3.10+ (recommended)
-- See `Frontend/DesktopFrontend/requirements.txt`
+## 🧠 Responsibilities
 
-## Setup
+- Desktop UI for analytics
+- API communication with Django backend
+- Dataset visualization using Matplotlib
+- Cross-platform execution
 
-```powershell
-cd Frontend\DesktopFrontend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+---
+
+## 🛠 Tech Stack
+
+- Python 3.12+
+- PyQt5
+- Requests
+- Matplotlib
+
+---
+
+## 📦 Setup
+
+```bash
+cd Frontend/DesktopFrontend
+python -m venv venv
+# On Unix/macOS:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
 pip install -r requirements.txt
+```
 
+### ▶ Run Application
+
+```bash
 python main.py
 ```
 
-## Configuration
+### 🔗 Backend Configuration
 
-Set the API base URL in `Frontend/DesktopFrontend/.env`:
+Ensure the backend is running at:
 
 ```
-API_BASE_URL=http://localhost:8000/api
+http://localhost:8000
 ```
 
-## Notes
+API base URL can be changed inside:
 
-- Login, signup, and logout call the API endpoints under `/api/auth/`.
-- Dataset history and analytics depend on the backend being running.
+```
+api/client.py
+```
+
+---
+
+## 🧩 UI Components
+
+- Navbar
+- File Upload
+- Summary Cards
+- Charts (Matplotlib)
+- Data Table
+- History List
