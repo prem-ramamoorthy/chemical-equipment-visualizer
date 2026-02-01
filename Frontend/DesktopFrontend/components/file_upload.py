@@ -8,8 +8,10 @@ from PyQt5.QtGui import QFont
 class FileUpload(QWidget):
     fileSelected = pyqtSignal(str)
 
-    def __init__(self, parent=None):
-        super().__init__()
+    def __init__(self, on_upload=None, parent=None):
+        super().__init__(parent)
+        
+        self.on_upload = on_upload
 
         outer_layout = QVBoxLayout(self)
         outer_layout.setContentsMargins(0, 0, 0, 0)
@@ -92,4 +94,17 @@ class FileUpload(QWidget):
                 color: #059669;
             """)
             self.sub_text.setText(filename)
-            self.fileSelected.emit(file_path)
+            self.fileSelected.emit(file_path)            
+            if self.on_upload is not None:
+                self.on_upload(file_path, filename)
+
+    def set_loading(self, loading: bool):
+        """Enable or disable the upload area and show loading state."""
+        if loading:
+            self.drop_area.setEnabled(False)
+            self.main_text.setText("Uploading...")
+            self.sub_text.setText("Please wait")
+        else:
+            self.drop_area.setEnabled(True)
+            self.main_text.setText("Drop your CSV file here or browse")
+            self.sub_text.setText("Supports equipment parameter datasets")
