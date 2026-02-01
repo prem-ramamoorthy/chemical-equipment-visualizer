@@ -66,14 +66,12 @@ class HeatmapCanvas(QWidget):
             }
         """)
         self._hover_cell = None
-        self._selected_cells = set()
 
     def set_data(self, data: List[CorrelationDatum]) -> None:
         self._data = data or []
         self._labels = get_unique_labels(self._data)
         self._map = {(d.x, d.y): float(d.v) for d in self._data}
         self._hover_cell = None
-        self._selected_cells = set()
         self._tip.setVisible(False)
         self.update()
 
@@ -146,11 +144,6 @@ class HeatmapCanvas(QWidget):
                     hl.setWidth(2)
                     p.setPen(hl)
                     p.drawRect(cell.adjusted(0, 0, -1, -1))
-                if (row, col) in self._selected_cells:
-                    sel = QPen(QColor(0, 200, 83))
-                    sel.setWidth(3)
-                    p.setPen(sel)
-                    p.drawRect(cell.adjusted(-1, -1, 1, 1))
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
@@ -206,26 +199,9 @@ class HeatmapCanvas(QWidget):
         self.update()
 
     def mousePressEvent(self, event):
+        # Disable cell selection/highlighting
         super().mousePressEvent(event)
-        if not self._labels:
-            return
-        grid_rect, _, _ = self._layout_rects()
-        pos = event.pos()
-        n = len(self._labels)
-        cell_w = max(6, int(grid_rect.width() / n) - 2)
-        cell_h = max(6, int(grid_rect.height() / n) - 2)
-        step_x = cell_w + 2
-        step_y = cell_h + 2
-        col = (pos.x() - grid_rect.left()) // step_x
-        row = (pos.y() - grid_rect.top()) // step_y
-        if row < 0 or col < 0 or row >= n or col >= n:
-            return
-        cell = (int(row), int(col))
-        if cell in self._selected_cells:
-            self._selected_cells.remove(cell)
-        else:
-            self._selected_cells.add(cell)
-        self.update()
+        # No selection logic
 
 class CorrelationHeatmapWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):

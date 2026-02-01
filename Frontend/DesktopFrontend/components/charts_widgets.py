@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QRect
 from PyQt5.QtGui import QColor, QFont, QPainter, QPen, QBrush
 from PyQt5.QtWidgets import (
     QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout,
@@ -236,28 +236,65 @@ class BoxPlotCanvas(QWidget):
         self.values: List[List[float]] = []
         self.setMinimumHeight(288)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._tooltip_text = ""
+        self._tooltip_rect = QRect()
+        self.setMouseTracking(True)
 
     def set_boxplot(self, labels: List[str], values: List[List[float]]) -> None:
         self.labels = labels
         self.values = values
         self.update()
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseMoveEvent(self, event):
+        self._tooltip_text = ""
+        self._tooltip_rect = QRect()
+        
+        rect = self.rect().adjusted(16, 10, -16, -24)
         if not self.labels or not self.values:
+            self.update()
             return
-        idx, ok = QInputDialog.getInt(self, "Edit Boxplot", "Select group index:", 0, 0, len(self.labels)-1)
-        if ok:
-            row = self.values[idx]
-            if len(row) >= 5:
-                vals = []
-                for j, name in enumerate(["Min", "Q1", "Median", "Q3", "Max"]):
-                    val, ok2 = QInputDialog.getDouble(self, f"Edit {self.labels[idx]}", f"{name}:", row[j], -10000, 10000, 2)
-                    if ok2:
-                        vals.append(val)
-                    else:
-                        vals.append(row[j])
-                self.values[idx] = vals
+        
+        all_vals = [v for row in self.values for v in row if len(row) >= 5]
+        if not all_vals:
+            self.update()
+            return
+            
+        gmin = min(all_vals)
+        gmax = max(all_vals)
+        if gmax == gmin:
+            gmax += 1.0
+        
+        left = rect.left() + 32
+        right = rect.right()
+        top = rect.top()
+        bottom = rect.bottom()
+        
+        n = len(self.labels)
+        slot_w = (right - left) / max(1, n)
+        box_w = max(18, int(slot_w * 0.45))
+        
+        def y_map(v: float) -> int:
+            return int(top + (gmax - v) * (bottom - top) / (gmax - gmin))
+        
+        for i, (lab, row) in enumerate(zip(self.labels, self.values)):
+            if len(row) < 5:
+                continue
+            vmin, q1, med, q3, vmax = row[:5]
+            cx = left + slot_w * (i + 0.5)
+            
+            y_q1 = y_map(q1)
+            y_q3 = y_map(q3)
+            x0 = int(cx - box_w / 2)
+            
+            box_rect = QRect(x0, y_q3, box_w, max(2, y_q1 - y_q3))
+            
+            if box_rect.contains(event.pos()):
+                self._tooltip_text = f"\n{lab}\nMin: {vmin:.2f}\nQ1: {q1:.2f}\nMedian: {med:.2f}\nQ3: {q3:.2f}\nMax: {vmax:.2f}"
+                self._tooltip_rect = box_rect
                 self.update()
+                return
+        
+        self.update()
 
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -327,6 +364,31 @@ class BoxPlotCanvas(QWidget):
             p.drawLine(x0, y_med, x0 + box_w, y_med)
             p.setPen(QPen(QColor("#475569")))
             p.drawText(int(cx - slot_w/2), bottom + 6, int(slot_w), 16, Qt.AlignCenter, lab)
+        
+        # Draw tooltip
+        if self._tooltip_text:
+            tooltip_font = QFont()
+            tooltip_font.setPointSize(8)
+            p.setFont(tooltip_font)
+            
+            metrics = p.fontMetrics()
+            lines = self._tooltip_text.split('\n')
+            max_width = max(metrics.width(line) for line in lines)
+            line_height = metrics.height()
+            
+            tooltip_width = max_width + 12
+            tooltip_height = len(lines) * line_height + 8
+            
+            tooltip_x = min(self._tooltip_rect.right() + 5, self.width() - tooltip_width - 5)
+            tooltip_y = max(5, self._tooltip_rect.top())
+            
+            p.fillRect(tooltip_x, tooltip_y, tooltip_width, tooltip_height, QColor("#1f2937"))
+            p.setPen(QPen(QColor("#d1d5db")))
+            p.drawRect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
+            
+            p.setPen(QColor("#f3f4f6"))
+            for idx, line in enumerate(lines):
+                p.drawText(tooltip_x + 6, tooltip_y + 4 + idx * line_height, line)
 
 class BoxPlotCard(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
@@ -346,9 +408,6 @@ class BoxPlotCard(QWidget):
         lay.addLayout(header)
         self.canvas = BoxPlotCanvas()
         lay.addWidget(self.canvas)
-        self.interactive_btn = QPushButton("Edit Boxplot Data")
-        self.interactive_btn.clicked.connect(self.edit_boxplot)
-        lay.addWidget(self.interactive_btn)
         self._labels = []
         self._values = []
 
@@ -356,23 +415,6 @@ class BoxPlotCard(QWidget):
         self._labels = labels[:]
         self._values = [v[:] for v in values]
         self.canvas.set_boxplot(labels, values)
-
-    def edit_boxplot(self):
-        if not self._labels or not self._values:
-            return
-        idx, ok = QInputDialog.getInt(self, "Edit Boxplot", "Select group index:", 0, 0, len(self._labels)-1)
-        if ok:
-            row = self._values[idx]
-            if len(row) >= 5:
-                vals = []
-                for j, name in enumerate(["Min", "Q1", "Median", "Q3", "Max"]):
-                    val, ok2 = QInputDialog.getDouble(self, f"Edit {self._labels[idx]}", f"{name}:", row[j], -10000, 10000, 2)
-                    if ok2:
-                        vals.append(val)
-                    else:
-                        vals.append(row[j])
-                self._values[idx] = vals
-                self.canvas.set_boxplot(self._labels, self._values)
 
 class ResponsiveGrid(QWidget):
     def __init__(self, gap: int = 16, breakpoint: int = 900, parent: Optional[QWidget] = None):

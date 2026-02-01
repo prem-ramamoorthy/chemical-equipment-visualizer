@@ -1,44 +1,71 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QScrollArea
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QScrollArea, QSizePolicy
 from PyQt5.QtCore import Qt
 
 from components.navbar import Navbar
-from components.file_upload import FileUpload
-from components.summary_cards import SummaryCards
-from components.charts import Charts
-from components.data_table import DataTable
-from components.history_list import HistoryList
-
 from components.advanced_charts_grid import (
     AdvancedChartsGridWidget,
     ChartsGridSummary,
     BoxPlotData,
 )
-
 from components.histogram_chart import HistogramData
 from components.correlation_heatmap import CorrelationDatum
 from api.client import logout_user
 
+from components.file_upload import FileUpload
+from components.history_list import HistoryList
+
+from components.statistical_summary import (
+    StatisticalSummaryWidget,
+    StatisticalSummaryData,
+    StatColumn,
+)
+
+from components.correlation_insights import CorrelationInsightsWidget
+
+from components.conditional_analysis import (
+    ConditionalAnalysisWidget,
+    ConditionalAnalysisData,
+    ConditionalStats,
+)
+
+from components.distribution_analysis import (
+    DistributionAnalysisWidget,
+    DistributionAnalysisData,
+    DistributionStats,
+)
+
+from components.equipment_performance_ranking import (
+    EquipmentPerformanceRankingWidget,
+    EquipmentRankingData,
+    PerformanceMetrics,
+)
+
+from components.grouped_equipment_analytics import (
+    GroupedEquipmentAnalyticsWidget,
+    GroupedAnalyticsData,
+    EquipmentAnalytics,
+    MetricStats,
+)
+
+from typing import List, Dict, Any, Tuple, Optional
 
 class DashboardPage(QWidget):
-    def __init__(self, app, username="Guest"):
+    def __init__(self, app, username: str = "Guest"):
         super().__init__()
         self.app = app
         self.setObjectName("Dashboard")
         self.username = username
         self.init_ui()
-
         self.load_advanced_from_mock()
 
     def init_ui(self):
         self.setStyleSheet("""
             QWidget#Dashboard {
-                background-color: #f8fafc; /* slate-50 */
+                background-color: #f8fafc;
             }
-
             QFrame#Container {
                 background: transparent;
             }
-
             QFrame#Card {
                 background-color: white;
                 border: 1px solid #e5e7eb;
@@ -56,8 +83,10 @@ class DashboardPage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         scroll_content = QWidget()
+        scroll_content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         scroll.setWidget(scroll_content)
 
         scroll_layout = QHBoxLayout(scroll_content)
@@ -66,6 +95,7 @@ class DashboardPage(QWidget):
 
         container = QFrame()
         container.setObjectName("Container")
+        container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         container_layout = QHBoxLayout(container)
         container_layout.setContentsMargins(24, 32, 24, 32)
         container_layout.setSpacing(24)
@@ -83,83 +113,70 @@ class DashboardPage(QWidget):
         main = QVBoxLayout()
         main.setSpacing(24)
         main.setAlignment(Qt.AlignTop)
-
-        self.summary = SummaryCards()
-        self.charts = Charts()
-        self.table = DataTable()
-
+        
         self.advanced = AdvancedChartsGridWidget()
+        self.advanced.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.wrap_card(self.advanced, main, expand=True)
 
-        self.wrap_card(self.summary, main)
-        self.wrap_card(self.charts, main)
+        self.stat_summary = StatisticalSummaryWidget()
+        self.wrap_card(self.stat_summary, main)
 
-        self.wrap_card(self.advanced, main)
+        self.corr_insights = CorrelationInsightsWidget()
+        self.wrap_card(self.corr_insights, main)
 
-        self.wrap_card(self.table, main)
+        self.conditional_analysis = ConditionalAnalysisWidget()
+        self.wrap_card(self.conditional_analysis, main)
+
+        self.distribution_analysis = DistributionAnalysisWidget()
+        self.wrap_card(self.distribution_analysis, main)
+
+        self.equipment_ranking = EquipmentPerformanceRankingWidget()
+        self.wrap_card(self.equipment_ranking, main)
+
+        self.grouped_analytics = GroupedEquipmentAnalyticsWidget()
+        self.wrap_card(self.grouped_analytics, main)
 
         container_layout.addLayout(sidebar, 1)
-        container_layout.addLayout(main, 3)
+        container_layout.addLayout(main, 4)
 
-        wrapper = QHBoxLayout()
-        wrapper.addStretch()
-        wrapper.addWidget(container)
-        wrapper.addStretch()
-
-        scroll_layout.addLayout(wrapper)
-
+        scroll_layout.addWidget(container)
         root.addWidget(scroll)
 
-    def wrap_card(self, widget, layout):
-        """Wrap components in card-style containers"""
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+    def wrap_card(self, widget: QWidget, layout: QVBoxLayout, expand=False):
         card = QFrame()
         card.setObjectName("Card")
-
         v = QVBoxLayout(card)
         v.setContentsMargins(16, 16, 16, 16)
         v.addWidget(widget)
-
-        layout.addWidget(card)
+        if expand:
+            card.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addWidget(card, stretch=1 if expand else 0)
 
     def load_advanced_from_mock(self):
         raw = [
             {"Equipment Name":"Reactor-1","Type":"Reactor","Flowrate":"133.4","Pressure":"7.0","Temperature":"135.6"},
-            {"Equipment Name":"HeatExchanger-1","Type":"HeatExchanger","Flowrate":"157.5","Pressure":"6.4","Temperature":"142.6"},
-            {"Equipment Name":"Condenser-1","Type":"Condenser","Flowrate":"158.9","Pressure":"7.2","Temperature":"134.0"},
-            {"Equipment Name":"Pump-1","Type":"Pump","Flowrate":"115.1","Pressure":"5.0","Temperature":"106.4"},
-            {"Equipment Name":"Pump-2","Type":"Pump","Flowrate":"116.5","Pressure":"5.2","Temperature":"109.8"},
-            {"Equipment Name":"Condenser-2","Type":"Condenser","Flowrate":"165.7","Pressure":"7.4","Temperature":"125.2"},
-            {"Equipment Name":"Condenser-3","Type":"Condenser","Flowrate":"160.8","Pressure":"7.4","Temperature":"125.4"},
-            {"Equipment Name":"Valve-1","Type":"Valve","Flowrate":"62.7","Pressure":"4.2","Temperature":"112.7"},
-            {"Equipment Name":"Pump-3","Type":"Pump","Flowrate":"134.3","Pressure":"5.9","Temperature":"114.0"},
-            {"Equipment Name":"HeatExchanger-2","Type":"HeatExchanger","Flowrate":"140.8","Pressure":"5.9","Temperature":"123.2"},
-            {"Equipment Name":"Condenser-4","Type":"Condenser","Flowrate":"173.8","Pressure":"7.0","Temperature":"131.3"},
-            {"Equipment Name":"Compressor-1","Type":"Compressor","Flowrate":"89.3","Pressure":"8.5","Temperature":"104.8"},
-            {"Equipment Name":"Valve-2","Type":"Valve","Flowrate":"51.3","Pressure":"3.5","Temperature":"109.4"},
-            {"Equipment Name":"Pump-4","Type":"Pump","Flowrate":"130.5","Pressure":"5.4","Temperature":"118.7"},
-            {"Equipment Name":"HeatExchanger-3","Type":"HeatExchanger","Flowrate":"140.2","Pressure":"6.9","Temperature":"127.8"},
-            {"Equipment Name":"Reactor-2","Type":"Reactor","Flowrate":"144.3","Pressure":"6.8","Temperature":"135.8"},
-            {"Equipment Name":"Reactor-3","Type":"Reactor","Flowrate":"130.0","Pressure":"7.3","Temperature":"137.6"},
-            {"Equipment Name":"Valve-3","Type":"Valve","Flowrate":"52.0","Pressure":"4.2","Temperature":"102.7"},
-            {"Equipment Name":"Condenser-5","Type":"Condenser","Flowrate":"156.3","Pressure":"6.8","Temperature":"122.3"},
-            {"Equipment Name":"HeatExchanger-4","Type":"HeatExchanger","Flowrate":"153.2","Pressure":"6.7","Temperature":"134.1"},
-            {"Equipment Name":"HeatExchanger-5","Type":"HeatExchanger","Flowrate":"158.6","Pressure":"5.8","Temperature":"143.1"},
-            {"Equipment Name":"Valve-4","Type":"Valve","Flowrate":"61.8","Pressure":"3.9","Temperature":"105.7"},
-            {"Equipment Name":"Pump-5","Type":"Pump","Flowrate":"123.5","Pressure":"5.2","Temperature":"107.9"},
-            {"Equipment Name":"Condenser-6","Type":"Condenser","Flowrate":"172.9","Pressure":"6.6","Temperature":"128.9"},
-            {"Equipment Name":"HeatExchanger-6","Type":"HeatExchanger","Flowrate":"159.9","Pressure":"6.1","Temperature":"130.6"},
-            {"Equipment Name":"Condenser-7","Type":"Condenser","Flowrate":"160.9","Pressure":"7.3","Temperature":"131.2"},
             {"Equipment Name":"Condenser-8","Type":"Condenser","Flowrate":"169.9","Pressure":"7.2","Temperature":"130.2"},
         ]
-
         summary = self.build_charts_grid_summary(raw)
         self.advanced.set_summary(summary)
+        stat_summary = self.build_statistical_summary(raw)
+        self.stat_summary.set_data(stat_summary)
+        corr_matrix = self._build_correlation_matrix_dict(raw)
+        self.corr_insights.set_matrix(corr_matrix)
+        cond_data = self._build_conditional_analysis_data(raw)
+        self.conditional_analysis.set_data(cond_data)
+        dist_data = self._build_distribution_analysis_data(raw, column="Flowrate", title="Flowrate", unit=" kg/h")
+        self.distribution_analysis.set_data(dist_data)
+        ranking_data = self._build_equipment_ranking_data(raw)
+        self.equipment_ranking.set_data(ranking_data)
+        grouped_data = self._build_grouped_equipment_analytics_data(raw)
+        self.grouped_analytics.set_data(grouped_data)
 
-    def build_charts_grid_summary(self, records):
-        flow = []
-        pres = []
-        temp = []
-        types = []
-
+    def build_charts_grid_summary(self, records: List[Dict[str, Any]]) -> ChartsGridSummary:
+        flow, pres, temp, types = [], [], [], []
         for r in records:
             try:
                 flow.append(float(r["Flowrate"]))
@@ -170,19 +187,13 @@ class DashboardPage(QWidget):
                 continue
 
         scatter_points = [{"x": x, "y": y} for x, y in zip(flow, pres)]
-
         bins, flow_counts = self._hist_counts(flow, bins_count=10)
         _, temp_counts = self._hist_counts(temp, bins_count=10, bin_edges=bins)
-
         bin_labels = [f"{bins[i]:.0f}-{bins[i+1]:.0f}" for i in range(len(bins) - 1)]
         histogram = HistogramData(labels=bin_labels, flowrate=flow_counts, temperature=temp_counts)
-
         box_labels, box_values = self._boxplot_by_type(types, pres)
-
         boxplot = BoxPlotData(labels=box_labels, values=box_values)
-
         corr = self._correlation_matrix(flow, pres, temp)
-
         return ChartsGridSummary(
             scatter_points=scatter_points,
             histogram=histogram,
@@ -190,22 +201,57 @@ class DashboardPage(QWidget):
             correlation=corr,
         )
 
-    def _hist_counts(self, values, bins_count=10, bin_edges=None):
+    def build_statistical_summary(self, records: List[Dict[str, Any]]) -> StatisticalSummaryData:
+        def stats(arr: List[float]) -> StatColumn:
+            if not arr:
+                return StatColumn(0, 0, 0, 0, 0, 0, 0, 0)
+            arr_sorted = sorted(arr)
+            n = len(arr)
+            mean = sum(arr) / n
+            std = (sum((x - mean) ** 2 for x in arr) / n) ** 0.5 if n > 1 else 0.0
+            minv = arr_sorted[0]
+            q1 = self._percentile(arr_sorted, 25)
+            med = self._percentile(arr_sorted, 50)
+            q3 = self._percentile(arr_sorted, 75)
+            maxv = arr_sorted[-1]
+            return StatColumn(
+                count=n,
+                mean=mean,
+                std=std,
+                min=minv,
+                q1=q1,
+                median=med,
+                q3=q3,
+                max=maxv,
+            )
+
+        flow, pres, temp = [], [], []
+        for r in records:
+            try:
+                flow.append(float(r["Flowrate"]))
+                pres.append(float(r["Pressure"]))
+                temp.append(float(r["Temperature"]))
+            except Exception:
+                continue
+
+        return StatisticalSummaryData(
+            flowrate=stats(flow),
+            pressure=stats(pres),
+            temperature=stats(temp),
+        )
+
+    def _hist_counts(self, values: List[float], bins_count: int = 10, bin_edges: List[float] = None) -> Tuple[List[float], List[int]]:
         if not values:
             edges = [0.0, 1.0]
             return edges, [0]
-
-        vmin = min(values)
-        vmax = max(values)
+        vmin, vmax = min(values), max(values)
         if vmax == vmin:
             vmax = vmin + 1.0
-
         if bin_edges is None:
             step = (vmax - vmin) / bins_count
             edges = [vmin + i * step for i in range(bins_count + 1)]
         else:
             edges = bin_edges
-
         counts = [0 for _ in range(len(edges) - 1)]
         for v in values:
             idx = len(edges) - 2
@@ -214,10 +260,9 @@ class DashboardPage(QWidget):
                     idx = i
                     break
             counts[idx] += 1
-
         return edges, counts
 
-    def _percentile(self, sorted_vals, p):
+    def _percentile(self, sorted_vals: List[float], p: float) -> float:
         if not sorted_vals:
             return 0.0
         n = len(sorted_vals)
@@ -232,11 +277,10 @@ class DashboardPage(QWidget):
         d1 = sorted_vals[c] * (k - f)
         return float(d0 + d1)
 
-    def _boxplot_by_type(self, types, pressures):
+    def _boxplot_by_type(self, types: List[str], pressures: List[float]) -> Tuple[List[str], List[List[float]]]:
         groups = {}
         for t, p in zip(types, pressures):
             groups.setdefault(t, []).append(p)
-
         labels = sorted(groups.keys())
         values = []
         for t in labels:
@@ -247,10 +291,9 @@ class DashboardPage(QWidget):
             q3 = self._percentile(arr, 75)
             vmax = float(arr[-1])
             values.append([vmin, q1, med, q3, vmax])
-
         return labels, values
 
-    def _pearson(self, a, b):
+    def _pearson(self, a: List[float], b: List[float]) -> float:
         n = min(len(a), len(b))
         if n < 2:
             return 0.0
@@ -258,9 +301,7 @@ class DashboardPage(QWidget):
         b = b[:n]
         ma = sum(a) / n
         mb = sum(b) / n
-        num = 0.0
-        da = 0.0
-        db = 0.0
+        num = da = db = 0.0
         for i in range(n):
             xa = a[i] - ma
             xb = b[i] - mb
@@ -271,14 +312,13 @@ class DashboardPage(QWidget):
             return 0.0
         return num / ((da ** 0.5) * (db ** 0.5))
 
-    def _correlation_matrix(self, flow, pres, temp):
+    def _correlation_matrix(self, flow: List[float], pres: List[float], temp: List[float]) -> List[CorrelationDatum]:
         labels = ["Flowrate", "Pressure", "Temperature"]
         series = {
             "Flowrate": flow,
             "Pressure": pres,
             "Temperature": temp,
         }
-
         out = []
         for x in labels:
             for y in labels:
@@ -286,19 +326,159 @@ class DashboardPage(QWidget):
                 out.append(CorrelationDatum(x=x, y=y, v=float(v)))
         return out
 
-    def on_upload(self, filename):
-        dataset = filename
-        self.summary.update(dataset)
-        self.charts.update(dataset)
-        self.table.update(dataset)
+    def _build_correlation_matrix_dict(self, records: List[Dict[str, Any]]) -> dict:
+        flow, pres, temp = [], [], []
+        for r in records:
+            try:
+                flow.append(float(r["Flowrate"]))
+                pres.append(float(r["Pressure"]))
+                temp.append(float(r["Temperature"]))
+            except Exception:
+                continue
+        labels = ["Flowrate", "Pressure", "Temperature"]
+        series = {
+            "Flowrate": flow,
+            "Pressure": pres,
+            "Temperature": temp,
+        }
+        matrix = {}
+        for x in labels:
+            matrix[x] = {}
+            for y in labels:
+                v = 1.0 if x == y else self._pearson(series[x], series[y])
+                matrix[x][y] = float(v)
+        return matrix
 
+    def _build_conditional_analysis_data(self, records: List[Dict[str, Any]]) -> ConditionalAnalysisData:
+        pressures = []
+        for r in records:
+            try:
+                pressures.append(float(r["Pressure"]))
+            except Exception:
+                continue
+        if not pressures:
+            return None
+        mean_pressure = sum(pressures) / len(pressures)
+        filtered = [r for r in records if float(r.get("Pressure", 0)) > mean_pressure]
+        if not filtered:
+            return None
+        flow_sum = pres_sum = temp_sum = 0.0
+        for r in filtered:
+            try:
+                flow_sum += float(r["Flowrate"])
+                pres_sum += float(r["Pressure"])
+                temp_sum += float(r["Temperature"])
+            except Exception:
+                continue
+        n = len(filtered)
+        stats = ConditionalStats(
+            flowrate=flow_sum / n if n else 0.0,
+            pressure=pres_sum / n if n else 0.0,
+            temperature=temp_sum / n if n else 0.0,
+        )
+        return ConditionalAnalysisData(
+            conditionLabel="Pressure above dataset mean",
+            totalRecords=n,
+            stats=stats,
+        )
+
+    def _build_distribution_analysis_data(
+        self,
+        records: List[Dict[str, Any]],
+        column: str = "Flowrate",
+        title: str = "Flowrate",
+        unit: str = " kg/h"
+    ) -> Optional[DistributionAnalysisData]:
+        values = []
+        for r in records:
+            try:
+                values.append(float(r[column]))
+            except Exception:
+                continue
+        if not values:
+            return None
+        arr = sorted(values)
+        n = len(arr)
+        minv = arr[0]
+        q1 = self._percentile(arr, 25)
+        med = self._percentile(arr, 50)
+        q3 = self._percentile(arr, 75)
+        maxv = arr[-1]
+        iqr = q3 - q1
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+        outliers = [v for v in arr if v < lower or v > upper]
+        stats = DistributionStats(
+            min=minv,
+            q1=q1,
+            median=med,
+            q3=q3,
+            max=maxv,
+            outliers=outliers if outliers else None,
+        )
+        return DistributionAnalysisData(
+            title=title,
+            unit=unit,
+            stats=stats,
+        )
+
+    def _build_equipment_ranking_data(self, records: List[Dict[str, Any]]) -> Optional[EquipmentRankingData]:
+        ranking: EquipmentRankingData = {}
+        for r in records:
+            try:
+                name = str(r["Equipment Name"])
+                flow = float(r["Flowrate"])
+                pres = float(r["Pressure"])
+                temp = float(r["Temperature"])
+                ranking[name] = PerformanceMetrics(
+                    flowrate=flow,
+                    pressure=pres,
+                    temperature=temp,
+                )
+            except Exception:
+                continue
+        return ranking if ranking else None
+
+    def _build_grouped_equipment_analytics_data(self, records: List[Dict[str, Any]]) -> Optional[GroupedAnalyticsData]:
+        from collections import defaultdict
+
+        groups = defaultdict(list)
+        for r in records:
+            try:
+                typ = str(r["Type"])
+                flow = float(r["Flowrate"])
+                pres = float(r["Pressure"])
+                temp = float(r["Temperature"])
+                groups[typ].append((flow, pres, temp))
+            except Exception:
+                continue
+
+        def stats(arr: List[float]) -> MetricStats:
+            if not arr:
+                return MetricStats(0, 0, 0, 0)
+            n = len(arr)
+            mean = sum(arr) / n
+            std = (sum((x - mean) ** 2 for x in arr) / n) ** 0.5 if n > 1 else 0.0
+            minv = min(arr)
+            maxv = max(arr)
+            return MetricStats(mean=mean, std=std, min=minv, max=maxv)
+
+        result: GroupedAnalyticsData = {}
+        for typ, vals in groups.items():
+            flows = [v[0] for v in vals]
+            press = [v[1] for v in vals]
+            temps = [v[2] for v in vals]
+            result[typ] = EquipmentAnalytics(
+                flowrate=stats(flows),
+                pressure=stats(press),
+                temperature=stats(temps),
+            )
+        return result if result else None
+
+    def on_upload(self, filename: str):
         self.load_advanced_from_mock()
 
-    def on_select(self, dataset):
-        self.summary.update(dataset)
-        self.charts.update(dataset)
-        self.table.update(dataset)
-
+    def on_select(self, dataset: Any):
         self.load_advanced_from_mock()
 
     def logout(self):

@@ -4,20 +4,14 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont, QPainter
+from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import (
     QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout,
     QGraphicsDropShadowEffect, QSizePolicy
 )
 
-QTCHARTS_AVAILABLE = True
-try:
-    from PyQt5.QtChart import (
-        QChart, QChartView, QBarSeries, QBarSet,
-        QBarCategoryAxis, QValueAxis
-    )
-except Exception:
-    QTCHARTS_AVAILABLE = False
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 @dataclass
 class HistogramData:
@@ -88,13 +82,11 @@ class HistogramChartWidget(QWidget):
         lay.addWidget(self._chart_container, stretch=1)
         self._chart_layout = QVBoxLayout(self._chart_container)
         self._chart_layout.setContentsMargins(0, 0, 0, 0)
-        self._chart_view: Optional[QChartView] = None
+        self._chart_layout.setSpacing(0)
+        self._canvas: Optional[FigureCanvas] = None
         self._placeholder = QLabel("No data")
         self._placeholder.setAlignment(Qt.AlignCenter)
         self._placeholder.setStyleSheet("color:#64748b;")
-        self._no_qtcharts = QLabel("QtCharts not available.\nInstall PyQtChart.")
-        self._no_qtcharts.setAlignment(Qt.AlignCenter)
-        self._no_qtcharts.setStyleSheet("color:#64748b;")
         self.set_summary(None)
 
     def set_summary(self, summary: Optional[ChartsGridSummary]) -> None:
@@ -102,13 +94,12 @@ class HistogramChartWidget(QWidget):
             w = self._chart_layout.takeAt(0).widget()
             if w:
                 w.deleteLater()
-        self._chart_view = None
+        self._canvas = None
         if summary is None:
             self._chart_layout.addWidget(self._placeholder)
             return
-        if not QTCHARTS_AVAILABLE:
-            self._chart_layout.addWidget(self._no_qtcharts)
-            return
+
+        # Prepare data
         bins = summary.histogram.labels
         flow = summary.histogram.flowrate
         temp = summary.histogram.temperature
@@ -116,47 +107,56 @@ class HistogramChartWidget(QWidget):
         bins = bins[:n]
         flow = flow[:n]
         temp = temp[:n]
-        flow_set = QBarSet("Flowrate")
-        temp_set = QBarSet("Temperature")
-        for v in flow:
-            flow_set.append(float(v))
-        for v in temp:
-            temp_set.append(float(v))
-        flow_set.setColor(QColor(37, 99, 235, 153))
-        temp_set.setColor(QColor(220, 38, 38, 153))
-        series = QBarSeries()
-        series.append(flow_set)
-        series.append(temp_set)
-        chart = QChart()
-        chart.addSeries(series)
-        chart.setBackgroundVisible(False)
-        chart.setTitle("Flowrate vs Temperature Distribution")
-        tfont = QFont()
-        tfont.setPointSize(12)
-        tfont.setBold(True)
-        chart.setTitleFont(tfont)
-        chart.legend().setVisible(True)
-        chart.legend().setAlignment(Qt.AlignTop)
-        axis_x = QBarCategoryAxis()
-        axis_x.append([str(b) for b in bins])
-        axis_x.setTitleText("Value")
-        axis_y = QValueAxis()
-        axis_y.setTitleText("Frequency")
-        chart.addAxis(axis_x, Qt.AlignBottom)
-        chart.addAxis(axis_y, Qt.AlignLeft)
-        series.attachAxis(axis_x)
-        series.attachAxis(axis_y)
-        self._chart_view = QChartView(chart)
-        self._chart_view.setRenderHint(QPainter.Antialiasing)
-        self._chart_view.setStyleSheet("background: transparent;")
-        self._chart_layout.addWidget(self._chart_view, stretch=1)
-        if QTCHARTS_AVAILABLE:
-            self._chart_view.setMouseTracking(True)
-            self._chart_view.viewport().installEventFilter(self)
 
-    def eventFilter(self, obj, event):
-        if QTCHARTS_AVAILABLE and self._chart_view and obj == self._chart_view.viewport():
-            if event.type() == event.MouseMove:
-                # QChart does not have an 'items' method; show a generic tooltip or implement custom logic here
-                self._chart_view.setToolTip("Hover over bars to see details.")
-        return super().eventFilter(obj, event)
+        # Create matplotlib figure
+        fig = Figure(figsize=(5, 3))
+        ax = fig.add_subplot(111)
+
+        # Plot histogram bars side by side (like matplotlib's bar chart)
+        import numpy as np
+        x = np.arange(len(bins))
+        width = 0.35
+
+        bars_flow = ax.bar(x - width/2, flow, width, label='Flowrate', color='#2563eb', alpha=0.6)
+        bars_temp = ax.bar(x + width/2, temp, width, label='Temperature', color='#dc2626', alpha=0.6)
+
+        # Correct label collision: rotate and align labels, adjust bottom margin
+        ax.set_xticks(x)
+        ax.set_xticklabels(bins, rotation=30, ha='right')
+        fig.subplots_adjust(bottom=0.22)
+
+        ax.set_xlabel("Categories")
+        ax.set_ylabel("Values")
+        ax.legend(loc='upper right')
+        ax.set_title("Parameter Distribution")
+
+        fig.tight_layout()
+
+        # Add tooltips to bars (corrected: show tooltip only when mouse is over a bar, and clear otherwise)
+        def format_tooltip(label, value):
+            return f"{label}: {value:.2f}"
+
+        def on_motion(event):
+            if event.inaxes != ax:
+                self._canvas.setToolTip("")
+                return
+            tooltip_text = ""
+            # Check flowrate bars
+            for rect, label, value in zip(bars_flow, bins, flow):
+                contains, _ = rect.contains(event)
+                if contains:
+                    tooltip_text = format_tooltip(f"Flowrate ({label})", value)
+                    break
+            # Check temperature bars if not found
+            if not tooltip_text:
+                for rect, label, value in zip(bars_temp, bins, temp):
+                    contains, _ = rect.contains(event)
+                    if contains:
+                        tooltip_text = format_tooltip(f"Temperature ({label})", value)
+                        break
+            self._canvas.setToolTip(tooltip_text)
+
+        self._canvas = FigureCanvas(fig)
+        self._canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._canvas.mpl_connect("motion_notify_event", on_motion)
+        self._chart_layout.addWidget(self._canvas, stretch=1)

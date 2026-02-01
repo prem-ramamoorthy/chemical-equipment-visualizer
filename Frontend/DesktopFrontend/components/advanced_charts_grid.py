@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
     QWidget, QFrame, QGridLayout, QVBoxLayout,
-    QGraphicsDropShadowEffect, QSizePolicy, QPushButton, QHBoxLayout
+    QGraphicsDropShadowEffect, QSizePolicy
 )
 
 from .scatter_chart import ScatterChartWidget
@@ -71,6 +71,7 @@ class ResponsiveGrid(QWidget):
         self._relayout()
 
     def _relayout(self) -> None:
+        # Always 2 rows and 2 columns if width >= breakpoint (tablet)
         cols = 2 if self.width() >= self.breakpoint else 1
         for idx, w in enumerate(self._items):
             r = idx // cols
@@ -89,31 +90,15 @@ class AdvancedChartsGridWidget(QWidget):
         self.box = BoxPlotCard()
         self.heat = CorrelationHeatmapWidget()
         self._skeletons = [make_skeleton_block() for _ in range(4)]
-        self.interactive_controls = self._create_interactive_controls()
-        outer.addLayout(self.interactive_controls)
-        self.set_summary(None)
+        self.set_summary(self._default_summary())
 
-    def _create_interactive_controls(self):
-        layout = QHBoxLayout()
-        self.load_button = QPushButton("Load Data")
-        self.clear_button = QPushButton("Clear")
-        layout.addWidget(self.load_button)
-        layout.addWidget(self.clear_button)
-        self.load_button.clicked.connect(self._on_load_clicked)
-        self.clear_button.clicked.connect(self._on_clear_clicked)
-        return layout
-
-    def _on_load_clicked(self):
-        summary = ChartsGridSummary(
+    def _default_summary(self) -> ChartsGridSummary:
+        return ChartsGridSummary(
             scatter_points=[{"x": 1, "y": 2}, {"x": 2, "y": 3}],
-            histogram=_HistogramData([1, 2, 3], [4, 5, 6]),
+            histogram=_HistogramData([1, 2, 3], [4, 5, 6], [300, 310, 320]),
             boxplot=BoxPlotData(labels=["A", "B"], values=[[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]]),
             correlation=[CorrelationDatum("A", "B", 0.8), CorrelationDatum("B", "C", 0.5)]
         )
-        self.set_summary(summary)
-
-    def _on_clear_clicked(self):
-        self.set_summary(None)
 
     def set_summary(self, summary: Optional[ChartsGridSummary]) -> None:
         if summary is None:

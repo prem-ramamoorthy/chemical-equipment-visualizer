@@ -91,6 +91,8 @@ class ScatterChartWidget(QWidget):
         self._no_qtcharts.setAlignment(Qt.AlignCenter)
         self._no_qtcharts.setStyleSheet("color:#64748b;")
         self._tooltip = QLabel("", self)
+        self._tooltip.setMinimumWidth(120)
+        self._tooltip.setMinimumHeight(40)
         self._tooltip.setStyleSheet("background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px;")
         self._tooltip.setVisible(False)
         self.set_summary(None)
