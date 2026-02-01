@@ -52,6 +52,9 @@ from datetime import datetime
 import os
 import requests
 
+from dotenv import load_dotenv
+load_dotenv()
+
 class UploadWorker(QThread):
     finished = pyqtSignal(dict, list)
     error = pyqtSignal(str)
@@ -129,7 +132,6 @@ class DashboardPage(QWidget):
         self.setObjectName("Dashboard")
         self.username = username
         self.api_base_url = os.environ.get("API_BASE_URL", "http://localhost:8000/api")
-
         self.datasets: Dict[int, Dict[str, Any]] = {}
         self.upload_history: List[Dict[str, Any]] = []
         self.current_dataset: Optional[Dict[str, Any]] = None
