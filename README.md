@@ -22,9 +22,9 @@ Frontend/
 
 ## Tech stack
 
-- Backend: Django, Django REST Framework, django-cors-headers, SQLite
+- Backend: Django, Django REST Framework, django-cors-headers, SQLite, pandas, numpy
 - Web frontend: React, TypeScript, Vite, Tailwind, Chart.js/Recharts
-- Desktop frontend: PyQt5, requests
+- Desktop frontend: PyQt5, requests, matplotlib, pandas
 
 ## Quick start
 
