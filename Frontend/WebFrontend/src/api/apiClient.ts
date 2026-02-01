@@ -78,7 +78,7 @@ export const uploadCSVToServer = async (
 
   const headers = rows[0].split(',').map((h) => h.trim());
 
-  const data = rows.slice(1).map((row) => {
+  const rawData = rows.slice(1).map((row) => {
     const values: string[] = [];
     let current = '';
     let inQuotes = false;
@@ -99,8 +99,17 @@ export const uploadCSVToServer = async (
     return headers.reduce((obj, header, idx) => {
       obj[header] = values[idx] ?? '';
       return obj;
-    }, {} as EquipmentRecord);
+    }, {} as Record<string, string>);
   });
+
+  // Map rawData to EquipmentRecord[]
+  const data: EquipmentRecord[] = rawData.map((row) => ({
+    "Equipment Name": row["Equipment Name"] ?? "",
+    Type: row["Type"] ?? "",
+    Flowrate: row["Flowrate"] ?? "",
+    Pressure: row["Pressure"] ?? "",
+    Temperature: row["Temperature"] ?? "",
+  }));
 
   const response = await fetch(url, {
     method: 'POST',

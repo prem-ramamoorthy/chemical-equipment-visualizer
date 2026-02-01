@@ -4,7 +4,7 @@ import FileUpload from "../components/FileUpload";
 import AdvancedChartsGrid from "../components/AdvancedChartsGrid";
 import DataTable from "../components/DataTable";
 import HistoryList from "../components/HistoryList";
-import type { UploadHistory, ChartsGridSummary, EquipmentRecord, DatasetSummary } from "../types/dataset";
+import type { UploadHistory, ChartsGridSummary, EquipmentRecord } from "../types/dataset";
 import { mockUploadCSV } from "../api/apiClient";
 import DistributionAnalysis from "../components/DistributionAnalysis";
 import StatisticalSummary from "../components/StatisticalSummary";
@@ -20,7 +20,7 @@ const Dashboard = () => {
   const [currentDataset, setCurrentDataset] =
     useState<ChartsGridSummary | null>(null);
 
-  const [datasets, setDatasets] = useState<Map<number, DatasetSummary>>(
+  const [datasets, setDatasets] = useState<Map<number, ChartsGridSummary>>(
     new Map()
   );
 
@@ -33,7 +33,7 @@ const Dashboard = () => {
         });
         const result = await response.json();
 
-        const datasetsMap = new Map<number, DatasetSummary>();
+        const datasetsMap = new Map<number, ChartsGridSummary>();
         const uploadHistoryArr: UploadHistory[] = [];
 
         if (result && Array.isArray(result.order) && typeof result.datasets === "object") {
