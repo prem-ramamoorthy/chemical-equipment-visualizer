@@ -1,47 +1,49 @@
 # Chemical Equipment Visualizer
 
-Visual analytics for chemical equipment datasets across two frontends (web and desktop) backed by a Django REST API. Upload equipment data, explore summaries, correlations, distributions, and performance rankings.
+End-to-end analytics for chemical equipment datasets with a Django REST API and two clients: a React web app and a PyQt5 desktop app. Upload equipment data, generate summaries and charts, and review recent dataset history.
 
-## Project structure
+## What is included
+
+- Backend API for dataset upload, analytics, history, and auth
+- Web frontend (React + Vite) for CSV upload and dashboards
+- Desktop frontend (PyQt5) for dashboards and auth
+
+## Repo structure
 
 ```
 Backend/
-  config/                 Django project (REST API)
+  README.md
+  config/                 Django project + API
 Frontend/
   WebFrontend/            React + Vite web app
   DesktopFrontend/        PyQt5 desktop app
 ```
 
-## Features
+Each subfolder contains its own README with additional details:
+- `Backend/README.md`
+- `Frontend/WebFrontend/README.md`
+- `Frontend/DesktopFrontend/README.md`
 
-- Upload equipment datasets and compute analytics
-- Summary cards (averages, counts, distributions)
-- Charts: scatter, histogram, box plot, correlations
-- Dataset history (last 1–5 uploads)
-- Auth endpoints (register/login/logout/me)
+## Requirements
 
-## Tech stack
+- Python 3.10+ (recommended)
+- Node.js 18+ and npm (for the web frontend)
 
-- Backend: Django, Django REST Framework, django-cors-headers, SQLite, pandas, numpy
-- Web frontend: React, TypeScript, Vite, Tailwind, Chart.js/Recharts
-- Desktop frontend: PyQt5, requests, matplotlib, pandas
-
-## Quick start
+## Quick start (local dev)
 
 ### 1) Backend API
 
 ```powershell
 cd Backend\config
-# create/activate a virtualenv, then install deps
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install django djangorestframework django-cors-headers
+pip install -r requirements.txt
 
 python manage.py migrate
 python manage.py runserver 8000
 ```
 
-API runs at `http://localhost:8000`.
+API base URL: `http://localhost:8000/api`
 
 ### 2) Web frontend
 
@@ -51,8 +53,9 @@ npm install
 npm run dev
 ```
 
-The web app expects the API base URL from `Frontend/WebFrontend/.env`:
+Web app URL: `http://localhost:5173`
 
+Environment config: `Frontend/WebFrontend/.env`
 ```
 VITE_API_BASE_URL="http://localhost:8000/api"
 ```
@@ -63,14 +66,19 @@ VITE_API_BASE_URL="http://localhost:8000/api"
 cd Frontend\DesktopFrontend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install pyqt5 requests
+pip install -r requirements.txt
 
 python main.py
 ```
 
-## API endpoints
+Environment config: `Frontend/DesktopFrontend/.env`
+```
+API_BASE_URL=http://localhost:8000/api
+```
 
-Base: `http://localhost:8000/api`
+## API overview
+
+Base URL: `http://localhost:8000/api`
 
 - `POST /datasets/upload/`
   - Body: JSON array of equipment records
@@ -80,7 +88,7 @@ Base: `http://localhost:8000/api`
     - `Flowrate`
     - `Pressure`
     - `Temperature`
-- `GET /datasets/history/?limit=5` (limit clamped 1–5)
+- `GET /datasets/history/?limit=5` (limit clamped 1-5)
 - `POST /auth/register/`
 - `POST /auth/login/`
 - `POST /auth/logout/`
@@ -88,15 +96,25 @@ Base: `http://localhost:8000/api`
 
 ## CSV format (web upload)
 
-The web client converts CSV rows into JSON and posts to `/datasets/upload/`.
-Ensure your CSV header includes:
+The web client parses CSV rows and sends JSON to `/datasets/upload/`.
+Ensure the CSV header includes:
 
 ```
 Equipment Name,Type,Flowrate,Pressure,Temperature
 ```
 
-## Notes
+## Data storage and limits
 
-- Backend uses SQLite by default (`Backend/config/db.sqlite3`).
-- CORS is configured for `http://localhost:5173`.
-- The desktop app calls the same auth endpoints as the web app.
+- Default database: SQLite at `Backend/config/db.sqlite3`
+- History endpoint returns up to the last 5 datasets
+- CORS allows `http://localhost:5173`
+
+## Troubleshooting
+
+- Backend not reachable: ensure `python manage.py runserver 8000` is running.
+- CORS errors in the web app: confirm the frontend URL matches `CORS_ALLOWED_ORIGINS` in `Backend/config/config/settings.py`.
+- Desktop app cannot log in: verify `API_BASE_URL` in `Frontend/DesktopFrontend/.env`.
+
+## License
+
+Add your license information here.
