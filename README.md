@@ -114,7 +114,3 @@ Equipment Name,Type,Flowrate,Pressure,Temperature
 - Backend not reachable: ensure `python manage.py runserver 8000` is running.
 - CORS errors in the web app: confirm the frontend URL matches `CORS_ALLOWED_ORIGINS` in `Backend/config/config/settings.py`.
 - Desktop app cannot log in: verify `API_BASE_URL` in `Frontend/DesktopFrontend/.env`.
-
-## License
-
-Add your license information here.
