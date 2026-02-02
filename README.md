@@ -109,6 +109,8 @@ Equipment Name,Type,Flowrate,Pressure,Temperature
 - History endpoint returns up to the last 5 datasets
 - CORS allows `http://localhost:5173, https://chemical-equipment-visualizer-six.vercel.app, https://fosseebackend-production.up.railway.app`
 
+## Use this [Dataset](equipment_data_500.csv) for advance analytics
+
 ## Troubleshooting
 
 - Backend not reachable: ensure `python manage.py runserver localhost:8000` is running.
