@@ -1,11 +1,11 @@
 import React from 'react';
-import { LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+import { LinearScale, PointElement, Tooltip, Legend, ScatterController } from 'chart.js';
 import { Activity } from 'lucide-react';
 import SafeChart from './SafeChart';
 import type { ChartsGridSummary } from '../types/dataset';
 
 import { Chart as ChartJS } from 'chart.js';
-ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
+ChartJS.register(LinearScale, PointElement, Tooltip, Legend, ScatterController);
 
 interface ScatterChartProps {
   summary: ChartsGridSummary | null;
