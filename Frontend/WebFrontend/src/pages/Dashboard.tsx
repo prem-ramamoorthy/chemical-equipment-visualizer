@@ -122,6 +122,11 @@ const Dashboard = () => {
     [datasets]
   );
 
+  const handleDownloadPdf = useCallback(() => {
+    if (!currentDataset) return;
+    window.print();
+  }, [currentDataset]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar username={username} onLogout={onLogout} />
@@ -140,36 +145,54 @@ const Dashboard = () => {
           </aside>
 
           <section className="space-y-6 lg:col-span-3">
+            <div className="no-print flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-700">Analytics</h2>
+                <p className="text-xs text-slate-500">Download a PDF of the current dataset charts and summaries.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={!currentDataset}
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                Download PDF
+              </button>
+            </div>
 
-            <StatisticalSummary data={currentDataset?.StatisticalSummary.data} />
+            <div id="analytics-print">
+              <div className="print-title">Dataset Analytics</div>
 
-            <AdvancedChartsGrid summary={currentDataset} />
+              <StatisticalSummary data={currentDataset?.StatisticalSummary.data} />
 
-            <CorrelationInsights
-              matrix={currentDataset?.CorrelationInsights.matrix}
-            />
+              <AdvancedChartsGrid summary={currentDataset} />
 
-            <ConditionalAnalysis
-              conditionLabel={currentDataset?.ConditionalAnalysis.conditionLabel}
-              totalRecords={currentDataset?.ConditionalAnalysis.totalRecords}
-              stats={currentDataset?.ConditionalAnalysis.stats}
-            />
+              <CorrelationInsights
+                matrix={currentDataset?.CorrelationInsights.matrix}
+              />
 
-            <DistributionAnalysis
-              title={currentDataset?.DistributionAnalysis.title}
-              unit={currentDataset?.DistributionAnalysis.unit}
-              stats={currentDataset?.DistributionAnalysis.stats}
-            />
+              <ConditionalAnalysis
+                conditionLabel={currentDataset?.ConditionalAnalysis.conditionLabel}
+                totalRecords={currentDataset?.ConditionalAnalysis.totalRecords}
+                stats={currentDataset?.ConditionalAnalysis.stats}
+              />
 
-            <EquipmentPerformanceRanking
-              data={currentDataset?.EquipmentPerformanceRanking}
-            />
+              <DistributionAnalysis
+                title={currentDataset?.DistributionAnalysis.title}
+                unit={currentDataset?.DistributionAnalysis.unit}
+                stats={currentDataset?.DistributionAnalysis.stats}
+              />
 
-            <GroupedEquipmentAnalytics
-              data={currentDataset?.GroupedEquipmentAnalytics}
-            />
+              <EquipmentPerformanceRanking
+                data={currentDataset?.EquipmentPerformanceRanking}
+              />
 
-            <DataTable data={data as EquipmentRecord[] ?? []} />
+              <GroupedEquipmentAnalytics
+                data={currentDataset?.GroupedEquipmentAnalytics}
+              />
+
+              <DataTable data={data as EquipmentRecord[] ?? []} />
+            </div>
           </section>
         </div>
       </main>

@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+.print-title {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #analytics-print,
+  #analytics-print * {
+    visibility: visible;
+  }
+
+  #analytics-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 24px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-title {
+    display: block;
+    margin-bottom: 16px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
